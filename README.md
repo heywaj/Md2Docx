@@ -4,6 +4,11 @@ A lightweight GUI tool for converting Markdown files to Word (`.docx`) using `pa
 
 ## Features
 
+- Chinese/English UI switch
+- Two-tier interface: `Standard` (default) and `Advanced`
+- Standard mode:
+  - Paste mode: paste markdown text, set output dir and file name, convert directly
+  - Single file mode: convert one markdown file
 - Single file conversion: one Markdown file -> one Word file
 - Folder batch conversion: convert all Markdown files in a folder
 - Optional `reference.docx` template for custom Word style
@@ -135,13 +140,16 @@ git push origin v1.0.0
 ## Usage
 
 1. Launch app (`python app.py` or `Md2Docx.exe`)
-2. Select mode:
-   - `Single Markdown file`
-   - `Folder batch convert`
-3. Select input path
-4. Select output directory
-5. (Optional) select a Word template `.docx`
-6. Click `Convert`
+2. Select language (`中文` / `English`)
+3. Select interface edition:
+   - `Standard` (default)
+   - `Advanced`
+4. In `Standard`:
+   - `Paste Mode`: paste markdown text, choose output dir, enter output file name, click convert
+   - `Single File Mode`: choose one markdown file and output dir, click convert
+5. In `Advanced`:
+   - choose `Single File` or `Folder Batch`
+   - set input, output, optional template, then convert
 
 ### Drag-and-drop to exe
 

@@ -11,127 +11,537 @@ from tkinter import filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
 
 
+TRANSLATIONS = {
+    "zh": {
+        "window_title": "Md2Docx - Markdown 转 Word",
+        "language_group": "Language / 语言",
+        "edition_group": "界面模式",
+        "edition_standard": "标准模式",
+        "edition_advanced": "高级模式",
+        "standard_title": "标准模式",
+        "standard_mode_group": "标准子模式",
+        "standard_mode_paste": "复制模式",
+        "standard_mode_single": "单文件模式",
+        "advanced_title": "高级模式",
+        "advanced_mode_group": "高级子模式",
+        "advanced_mode_single": "单文件模式",
+        "advanced_mode_folder": "文件夹批量模式",
+        "advanced_recursive": "批量时包含子目录",
+        "input_label": "输入：",
+        "output_label": "输出目录：",
+        "filename_label": "文件名：",
+        "template_label": "模板：",
+        "markdown_content_label": "Markdown 内容：",
+        "browse_btn": "浏览",
+        "clear_btn": "清空",
+        "convert_btn": "转换",
+        "converting_btn": "转换中...",
+        "log_ready": "已就绪：请选择输入并点击转换。",
+        "mode_standard_paste": "标准-复制模式",
+        "mode_standard_single": "标准-单文件模式",
+        "mode_advanced_single": "高级-单文件模式",
+        "mode_advanced_folder": "高级-文件夹模式",
+        "choose_md_file": "选择 Markdown 文件",
+        "choose_source_folder": "选择源目录",
+        "choose_output_folder": "选择输出目录",
+        "choose_template": "选择可选 Word 模板（.docx）",
+        "pandoc_not_found_title": "未找到 Pandoc",
+        "pandoc_not_found_msg": "未找到内置 pandoc，且 PATH 中也没有 pandoc。",
+        "missing_input_title": "缺少输入",
+        "missing_input_msg": "请选择输入文件/目录。",
+        "missing_output_title": "缺少输出",
+        "missing_output_msg": "请选择输出目录。",
+        "missing_content_title": "缺少内容",
+        "missing_content_msg": "请先粘贴 Markdown 内容。",
+        "missing_filename_title": "缺少文件名",
+        "missing_filename_msg": "请填写输出文件名。",
+        "invalid_filename_title": "文件名无效",
+        "invalid_filename_msg": "文件名不能包含以下字符：<>:\"/\\|?*",
+        "invalid_input_title": "输入无效",
+        "invalid_input_file_msg": "输入必须是 Markdown 文件。",
+        "invalid_input_folder_msg": "输入必须是目录。",
+        "invalid_template_title": "模板无效",
+        "invalid_template_msg": "模板必须是存在的 .docx 文件。",
+        "log_using_pandoc": "使用 pandoc：{pandoc}",
+        "log_mode": "模式：{mode}",
+        "log_input": "输入：{input}",
+        "log_output": "输出：{output}",
+        "log_template": "模板：{template}",
+        "log_target": "目标：{target}",
+        "log_found_files": "找到 {count} 个 Markdown 文件。",
+        "log_no_md": "未找到 Markdown 文件。",
+        "log_done": "完成。成功：{ok}，失败：{fail}",
+        "log_ok": "  成功",
+        "log_fail": "  失败：{err}",
+    },
+    "en": {
+        "window_title": "Md2Docx - Markdown to Word",
+        "language_group": "Language / 语言",
+        "edition_group": "Interface Mode",
+        "edition_standard": "Standard",
+        "edition_advanced": "Advanced",
+        "standard_title": "Standard Mode",
+        "standard_mode_group": "Standard Submode",
+        "standard_mode_paste": "Paste Mode",
+        "standard_mode_single": "Single File Mode",
+        "advanced_title": "Advanced Mode",
+        "advanced_mode_group": "Advanced Submode",
+        "advanced_mode_single": "Single File Mode",
+        "advanced_mode_folder": "Folder Batch Mode",
+        "advanced_recursive": "Include subfolders in folder mode",
+        "input_label": "Input:",
+        "output_label": "Output dir:",
+        "filename_label": "File name:",
+        "template_label": "Template:",
+        "markdown_content_label": "Markdown content:",
+        "browse_btn": "Browse",
+        "clear_btn": "Clear",
+        "convert_btn": "Convert",
+        "converting_btn": "Converting...",
+        "log_ready": "Ready. Choose input and click Convert.",
+        "mode_standard_paste": "Standard-Paste",
+        "mode_standard_single": "Standard-Single",
+        "mode_advanced_single": "Advanced-Single",
+        "mode_advanced_folder": "Advanced-Folder",
+        "choose_md_file": "Choose Markdown file",
+        "choose_source_folder": "Choose source folder",
+        "choose_output_folder": "Choose output folder",
+        "choose_template": "Choose optional Word template (.docx)",
+        "pandoc_not_found_title": "Pandoc Not Found",
+        "pandoc_not_found_msg": "No bundled pandoc found, and pandoc is not available in PATH.",
+        "missing_input_title": "Missing Input",
+        "missing_input_msg": "Please choose an input file/folder.",
+        "missing_output_title": "Missing Output",
+        "missing_output_msg": "Please choose an output folder.",
+        "missing_content_title": "Missing Content",
+        "missing_content_msg": "Please paste Markdown content first.",
+        "missing_filename_title": "Missing File Name",
+        "missing_filename_msg": "Please provide output file name.",
+        "invalid_filename_title": "Invalid File Name",
+        "invalid_filename_msg": "File name cannot contain: <>:\"/\\|?*",
+        "invalid_input_title": "Invalid Input",
+        "invalid_input_file_msg": "Input should be a Markdown file.",
+        "invalid_input_folder_msg": "Input should be a folder.",
+        "invalid_template_title": "Invalid Template",
+        "invalid_template_msg": "Template must be an existing .docx file.",
+        "log_using_pandoc": "Using pandoc: {pandoc}",
+        "log_mode": "Mode: {mode}",
+        "log_input": "Input: {input}",
+        "log_output": "Output: {output}",
+        "log_template": "Template: {template}",
+        "log_target": "Target: {target}",
+        "log_found_files": "Found {count} markdown file(s).",
+        "log_no_md": "No markdown files found.",
+        "log_done": "Done. Success: {ok}, Failed: {fail}",
+        "log_ok": "  OK",
+        "log_fail": "  FAIL: {err}",
+    },
+}
+
+MD_SUFFIXES = {".md", ".markdown", ".mdown", ".mkd"}
+INVALID_FILENAME_CHARS = set('<>:"/\\|?*')
+
+
 class Md2DocxApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("Md2Docx - Markdown to Word")
-        self.geometry("840x560")
-        self.minsize(760, 520)
+        self.geometry("980x740")
+        self.minsize(860, 620)
 
-        self.mode_var = tk.StringVar(value="single")
-        self.input_path_var = tk.StringVar()
-        self.output_dir_var = tk.StringVar()
-        self.template_var = tk.StringVar()
-        self.recursive_var = tk.BooleanVar(value=True)
+        self.lang_var = tk.StringVar(value="zh")
+        self.edition_var = tk.StringVar(value="standard")
+        self.standard_mode_var = tk.StringVar(value="paste")
+        self.advanced_mode_var = tk.StringVar(value="single")
+
+        self.std_paste_output_var = tk.StringVar()
+        self.std_paste_filename_var = tk.StringVar(value="output")
+        self.std_paste_template_var = tk.StringVar()
+
+        self.std_single_input_var = tk.StringVar()
+        self.std_single_output_var = tk.StringVar()
+        self.std_single_template_var = tk.StringVar()
+
+        self.adv_input_var = tk.StringVar()
+        self.adv_output_var = tk.StringVar()
+        self.adv_template_var = tk.StringVar()
+        self.adv_recursive_var = tk.BooleanVar(value=True)
 
         self.log_queue: queue.Queue[str] = queue.Queue()
         self.is_running = False
 
+        self.interactive_widgets: list[tk.Widget] = []
+
         self._build_ui()
+        self._refresh_texts()
         self._apply_startup_args()
+        self._append_log(self.t("log_ready"))
         self.after(120, self._drain_log_queue)
+
+    def t(self, key: str, lang: str | None = None, **kwargs: object) -> str:
+        use_lang = lang or self.lang_var.get()
+        text = TRANSLATIONS.get(use_lang, TRANSLATIONS["en"])[key]
+        return text.format(**kwargs) if kwargs else text
 
     def _build_ui(self) -> None:
         root = tk.Frame(self, padx=14, pady=14)
         root.pack(fill=tk.BOTH, expand=True)
 
-        mode_frame = tk.LabelFrame(root, text="Mode", padx=10, pady=8)
-        mode_frame.pack(fill=tk.X, pady=(0, 10))
+        top = tk.Frame(root)
+        top.pack(fill=tk.X, pady=(0, 10))
 
-        tk.Radiobutton(
-            mode_frame,
-            text="Single Markdown file",
-            variable=self.mode_var,
+        self.edition_frame = tk.LabelFrame(top, padx=10, pady=8)
+        self.edition_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        self.edition_standard_radio = tk.Radiobutton(
+            self.edition_frame,
+            variable=self.edition_var,
+            value="standard",
+            command=self._on_edition_change,
+        )
+        self.edition_standard_radio.pack(side=tk.LEFT, padx=(0, 12))
+
+        self.edition_advanced_radio = tk.Radiobutton(
+            self.edition_frame,
+            variable=self.edition_var,
+            value="advanced",
+            command=self._on_edition_change,
+        )
+        self.edition_advanced_radio.pack(side=tk.LEFT)
+
+        self.lang_frame = tk.LabelFrame(top, padx=10, pady=8)
+        self.lang_frame.pack(side=tk.LEFT, padx=(10, 0))
+
+        self.lang_zh_radio = tk.Radiobutton(
+            self.lang_frame,
+            text="中文",
+            variable=self.lang_var,
+            value="zh",
+            command=self._on_language_change,
+        )
+        self.lang_zh_radio.pack(side=tk.LEFT, padx=(0, 8))
+
+        self.lang_en_radio = tk.Radiobutton(
+            self.lang_frame,
+            text="English",
+            variable=self.lang_var,
+            value="en",
+            command=self._on_language_change,
+        )
+        self.lang_en_radio.pack(side=tk.LEFT)
+
+        self.standard_frame = tk.LabelFrame(root, padx=10, pady=10)
+        self.advanced_frame = tk.LabelFrame(root, padx=10, pady=10)
+
+        self._build_standard_frame()
+        self._build_advanced_frame()
+
+        self.log_box = ScrolledText(root, height=12, wrap=tk.WORD)
+        self.log_box.pack(fill=tk.BOTH, expand=True)
+        self.log_box.configure(state=tk.DISABLED)
+
+        self._register_interactive_widgets()
+        self._on_standard_mode_change()
+        self._on_advanced_mode_change()
+        self._on_edition_change()
+
+    def _build_standard_frame(self) -> None:
+        self.standard_mode_frame = tk.LabelFrame(self.standard_frame, padx=10, pady=8)
+        self.standard_mode_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.standard_paste_radio = tk.Radiobutton(
+            self.standard_mode_frame,
+            variable=self.standard_mode_var,
+            value="paste",
+            command=self._on_standard_mode_change,
+        )
+        self.standard_paste_radio.pack(side=tk.LEFT, padx=(0, 12))
+
+        self.standard_single_radio = tk.Radiobutton(
+            self.standard_mode_frame,
+            variable=self.standard_mode_var,
             value="single",
-            command=self._on_mode_change,
-        ).pack(anchor="w")
-        tk.Radiobutton(
-            mode_frame,
-            text="Folder batch convert",
-            variable=self.mode_var,
-            value="folder",
-            command=self._on_mode_change,
-        ).pack(anchor="w")
-
-        path_frame = tk.LabelFrame(root, text="Paths", padx=10, pady=10)
-        path_frame.pack(fill=tk.X, pady=(0, 10))
-
-        tk.Label(path_frame, text="Input:").grid(row=0, column=0, sticky="w", padx=(0, 8), pady=5)
-        self.input_entry = tk.Entry(path_frame, textvariable=self.input_path_var)
-        self.input_entry.grid(row=0, column=1, sticky="ew", pady=5)
-        self.input_btn = tk.Button(path_frame, text="Browse", command=self._pick_input)
-        self.input_btn.grid(row=0, column=2, padx=(8, 0), pady=5)
-
-        tk.Label(path_frame, text="Output dir:").grid(
-            row=1,
-            column=0,
-            sticky="w",
-            padx=(0, 8),
-            pady=5,
+            command=self._on_standard_mode_change,
         )
-        self.output_entry = tk.Entry(path_frame, textvariable=self.output_dir_var)
-        self.output_entry.grid(row=1, column=1, sticky="ew", pady=5)
-        self.output_btn = tk.Button(path_frame, text="Browse", command=self._pick_output_dir)
-        self.output_btn.grid(row=1, column=2, padx=(8, 0), pady=5)
+        self.standard_single_radio.pack(side=tk.LEFT)
 
-        tk.Label(path_frame, text="Template:").grid(
-            row=2,
-            column=0,
-            sticky="w",
-            padx=(0, 8),
-            pady=5,
+        self.standard_paste_panel = tk.Frame(self.standard_frame)
+        self.std_paste_content_label = tk.Label(self.standard_paste_panel)
+        self.std_paste_content_label.pack(anchor="w")
+
+        self.std_paste_text = ScrolledText(self.standard_paste_panel, height=12, wrap=tk.WORD)
+        self.std_paste_text.pack(fill=tk.X, pady=(4, 8))
+
+        self.std_paste_output_label = tk.Label(self.standard_paste_panel)
+        self.std_paste_output_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_paste_output_entry = tk.Entry(self.standard_paste_panel, textvariable=self.std_paste_output_var)
+        self.std_paste_output_entry.grid(row=2, column=1, sticky="ew", pady=4)
+        self.std_paste_output_btn = tk.Button(self.standard_paste_panel, command=self._pick_std_paste_output)
+        self.std_paste_output_btn.grid(row=2, column=2, padx=(8, 0), pady=4)
+
+        self.std_paste_filename_label = tk.Label(self.standard_paste_panel)
+        self.std_paste_filename_label.grid(row=3, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_paste_filename_entry = tk.Entry(
+            self.standard_paste_panel,
+            textvariable=self.std_paste_filename_var,
         )
-        self.template_entry = tk.Entry(path_frame, textvariable=self.template_var)
-        self.template_entry.grid(row=2, column=1, sticky="ew", pady=5)
-        self.template_btn = tk.Button(path_frame, text="Browse", command=self._pick_template)
-        self.template_btn.grid(row=2, column=2, padx=(8, 0), pady=5)
+        self.std_paste_filename_entry.grid(row=3, column=1, sticky="ew", pady=4)
 
-        self.clear_template_btn = tk.Button(
-            path_frame,
-            text="Clear",
-            command=lambda: self.template_var.set(""),
+        self.std_paste_template_label = tk.Label(self.standard_paste_panel)
+        self.std_paste_template_label.grid(row=4, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_paste_template_entry = tk.Entry(self.standard_paste_panel, textvariable=self.std_paste_template_var)
+        self.std_paste_template_entry.grid(row=4, column=1, sticky="ew", pady=4)
+        self.std_paste_template_btn = tk.Button(
+            self.standard_paste_panel,
+            command=lambda: self._pick_template(self.std_paste_template_var),
+        )
+        self.std_paste_template_btn.grid(row=4, column=2, padx=(8, 0), pady=4)
+        self.std_paste_template_clear_btn = tk.Button(
+            self.standard_paste_panel,
             width=8,
+            command=lambda: self.std_paste_template_var.set(""),
         )
-        self.clear_template_btn.grid(row=2, column=3, padx=(8, 0), pady=5)
+        self.std_paste_template_clear_btn.grid(row=4, column=3, padx=(8, 0), pady=4)
 
-        path_frame.columnconfigure(1, weight=1)
-
-        opt_frame = tk.LabelFrame(root, text="Options", padx=10, pady=10)
-        opt_frame.pack(fill=tk.X, pady=(0, 10))
-
-        self.recursive_check = tk.Checkbutton(
-            opt_frame,
-            text="Include subfolders when converting a folder",
-            variable=self.recursive_var,
-        )
-        self.recursive_check.pack(anchor="w")
-
-        action_frame = tk.Frame(root)
-        action_frame.pack(fill=tk.X, pady=(0, 10))
-
-        self.convert_btn = tk.Button(
-            action_frame,
-            text="Convert",
-            width=16,
-            command=self._start_convert,
+        self.std_paste_convert_btn = tk.Button(
+            self.standard_paste_panel,
+            width=18,
+            command=self._start_standard_paste_convert,
             bg="#1f6feb",
             fg="white",
         )
-        self.convert_btn.pack(side=tk.LEFT)
+        self.std_paste_convert_btn.grid(row=5, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
-        self.log_box = ScrolledText(root, height=14, wrap=tk.WORD)
-        self.log_box.pack(fill=tk.BOTH, expand=True)
-        self.log_box.insert(
-            tk.END,
-            "Ready. Choose input and output path, then click Convert.\n",
+        self.standard_paste_panel.columnconfigure(1, weight=1)
+
+        self.standard_single_panel = tk.Frame(self.standard_frame)
+
+        self.std_single_input_label = tk.Label(self.standard_single_panel)
+        self.std_single_input_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_single_input_entry = tk.Entry(self.standard_single_panel, textvariable=self.std_single_input_var)
+        self.std_single_input_entry.grid(row=0, column=1, sticky="ew", pady=4)
+        self.std_single_input_btn = tk.Button(self.standard_single_panel, command=self._pick_std_single_input)
+        self.std_single_input_btn.grid(row=0, column=2, padx=(8, 0), pady=4)
+
+        self.std_single_output_label = tk.Label(self.standard_single_panel)
+        self.std_single_output_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_single_output_entry = tk.Entry(self.standard_single_panel, textvariable=self.std_single_output_var)
+        self.std_single_output_entry.grid(row=1, column=1, sticky="ew", pady=4)
+        self.std_single_output_btn = tk.Button(self.standard_single_panel, command=self._pick_std_single_output)
+        self.std_single_output_btn.grid(row=1, column=2, padx=(8, 0), pady=4)
+
+        self.std_single_template_label = tk.Label(self.standard_single_panel)
+        self.std_single_template_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_single_template_entry = tk.Entry(self.standard_single_panel, textvariable=self.std_single_template_var)
+        self.std_single_template_entry.grid(row=2, column=1, sticky="ew", pady=4)
+        self.std_single_template_btn = tk.Button(
+            self.standard_single_panel,
+            command=lambda: self._pick_template(self.std_single_template_var),
         )
-        self.log_box.configure(state=tk.DISABLED)
+        self.std_single_template_btn.grid(row=2, column=2, padx=(8, 0), pady=4)
+        self.std_single_template_clear_btn = tk.Button(
+            self.standard_single_panel,
+            width=8,
+            command=lambda: self.std_single_template_var.set(""),
+        )
+        self.std_single_template_clear_btn.grid(row=2, column=3, padx=(8, 0), pady=4)
 
-        self._on_mode_change()
+        self.std_single_convert_btn = tk.Button(
+            self.standard_single_panel,
+            width=18,
+            command=self._start_standard_single_convert,
+            bg="#1f6feb",
+            fg="white",
+        )
+        self.std_single_convert_btn.grid(row=3, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
-    def _on_mode_change(self) -> None:
-        folder_mode = self.mode_var.get() == "folder"
-        self.recursive_check.configure(state=(tk.NORMAL if folder_mode else tk.DISABLED))
+        self.standard_single_panel.columnconfigure(1, weight=1)
+
+    def _build_advanced_frame(self) -> None:
+        self.advanced_mode_frame = tk.LabelFrame(self.advanced_frame, padx=10, pady=8)
+        self.advanced_mode_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.adv_single_radio = tk.Radiobutton(
+            self.advanced_mode_frame,
+            variable=self.advanced_mode_var,
+            value="single",
+            command=self._on_advanced_mode_change,
+        )
+        self.adv_single_radio.pack(side=tk.LEFT, padx=(0, 12))
+
+        self.adv_folder_radio = tk.Radiobutton(
+            self.advanced_mode_frame,
+            variable=self.advanced_mode_var,
+            value="folder",
+            command=self._on_advanced_mode_change,
+        )
+        self.adv_folder_radio.pack(side=tk.LEFT)
+
+        self.advanced_path_frame = tk.LabelFrame(self.advanced_frame, padx=10, pady=10)
+        self.advanced_path_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.adv_input_label = tk.Label(self.advanced_path_frame)
+        self.adv_input_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.adv_input_entry = tk.Entry(self.advanced_path_frame, textvariable=self.adv_input_var)
+        self.adv_input_entry.grid(row=0, column=1, sticky="ew", pady=4)
+        self.adv_input_btn = tk.Button(self.advanced_path_frame, command=self._pick_adv_input)
+        self.adv_input_btn.grid(row=0, column=2, padx=(8, 0), pady=4)
+
+        self.adv_output_label = tk.Label(self.advanced_path_frame)
+        self.adv_output_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.adv_output_entry = tk.Entry(self.advanced_path_frame, textvariable=self.adv_output_var)
+        self.adv_output_entry.grid(row=1, column=1, sticky="ew", pady=4)
+        self.adv_output_btn = tk.Button(self.advanced_path_frame, command=self._pick_adv_output)
+        self.adv_output_btn.grid(row=1, column=2, padx=(8, 0), pady=4)
+
+        self.adv_template_label = tk.Label(self.advanced_path_frame)
+        self.adv_template_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.adv_template_entry = tk.Entry(self.advanced_path_frame, textvariable=self.adv_template_var)
+        self.adv_template_entry.grid(row=2, column=1, sticky="ew", pady=4)
+        self.adv_template_btn = tk.Button(
+            self.advanced_path_frame,
+            command=lambda: self._pick_template(self.adv_template_var),
+        )
+        self.adv_template_btn.grid(row=2, column=2, padx=(8, 0), pady=4)
+        self.adv_template_clear_btn = tk.Button(
+            self.advanced_path_frame,
+            width=8,
+            command=lambda: self.adv_template_var.set(""),
+        )
+        self.adv_template_clear_btn.grid(row=2, column=3, padx=(8, 0), pady=4)
+
+        self.advanced_path_frame.columnconfigure(1, weight=1)
+
+        self.adv_option_frame = tk.LabelFrame(self.advanced_frame, padx=10, pady=8)
+        self.adv_option_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.adv_recursive_check = tk.Checkbutton(self.adv_option_frame, variable=self.adv_recursive_var)
+        self.adv_recursive_check.pack(anchor="w")
+
+        self.adv_convert_btn = tk.Button(
+            self.advanced_frame,
+            width=18,
+            command=self._start_advanced_convert,
+            bg="#1f6feb",
+            fg="white",
+        )
+        self.adv_convert_btn.pack(anchor="w")
+
+    def _register_interactive_widgets(self) -> None:
+        self.interactive_widgets = [
+            self.edition_standard_radio,
+            self.edition_advanced_radio,
+            self.lang_zh_radio,
+            self.lang_en_radio,
+            self.standard_paste_radio,
+            self.standard_single_radio,
+            self.adv_single_radio,
+            self.adv_folder_radio,
+            self.adv_recursive_check,
+            self.std_paste_output_entry,
+            self.std_paste_output_btn,
+            self.std_paste_filename_entry,
+            self.std_paste_template_entry,
+            self.std_paste_template_btn,
+            self.std_paste_template_clear_btn,
+            self.std_paste_text,
+            self.std_paste_convert_btn,
+            self.std_single_input_entry,
+            self.std_single_input_btn,
+            self.std_single_output_entry,
+            self.std_single_output_btn,
+            self.std_single_template_entry,
+            self.std_single_template_btn,
+            self.std_single_template_clear_btn,
+            self.std_single_convert_btn,
+            self.adv_input_entry,
+            self.adv_input_btn,
+            self.adv_output_entry,
+            self.adv_output_btn,
+            self.adv_template_entry,
+            self.adv_template_btn,
+            self.adv_template_clear_btn,
+            self.adv_convert_btn,
+        ]
+
+    def _refresh_texts(self) -> None:
+        self.title(self.t("window_title"))
+
+        self.lang_frame.configure(text=self.t("language_group"))
+        self.edition_frame.configure(text=self.t("edition_group"))
+        self.edition_standard_radio.configure(text=self.t("edition_standard"))
+        self.edition_advanced_radio.configure(text=self.t("edition_advanced"))
+
+        self.standard_frame.configure(text=self.t("standard_title"))
+        self.standard_mode_frame.configure(text=self.t("standard_mode_group"))
+        self.standard_paste_radio.configure(text=self.t("standard_mode_paste"))
+        self.standard_single_radio.configure(text=self.t("standard_mode_single"))
+
+        self.std_paste_content_label.configure(text=self.t("markdown_content_label"))
+        self.std_paste_output_label.configure(text=self.t("output_label"))
+        self.std_paste_filename_label.configure(text=self.t("filename_label"))
+        self.std_paste_template_label.configure(text=self.t("template_label"))
+        self.std_paste_output_btn.configure(text=self.t("browse_btn"))
+        self.std_paste_template_btn.configure(text=self.t("browse_btn"))
+        self.std_paste_template_clear_btn.configure(text=self.t("clear_btn"))
+
+        self.std_single_input_label.configure(text=self.t("input_label"))
+        self.std_single_output_label.configure(text=self.t("output_label"))
+        self.std_single_template_label.configure(text=self.t("template_label"))
+        self.std_single_input_btn.configure(text=self.t("browse_btn"))
+        self.std_single_output_btn.configure(text=self.t("browse_btn"))
+        self.std_single_template_btn.configure(text=self.t("browse_btn"))
+        self.std_single_template_clear_btn.configure(text=self.t("clear_btn"))
+
+        self.advanced_frame.configure(text=self.t("advanced_title"))
+        self.advanced_mode_frame.configure(text=self.t("advanced_mode_group"))
+        self.adv_single_radio.configure(text=self.t("advanced_mode_single"))
+        self.adv_folder_radio.configure(text=self.t("advanced_mode_folder"))
+        self.advanced_path_frame.configure(text=self.t("advanced_title"))
+        self.adv_input_label.configure(text=self.t("input_label"))
+        self.adv_output_label.configure(text=self.t("output_label"))
+        self.adv_template_label.configure(text=self.t("template_label"))
+        self.adv_input_btn.configure(text=self.t("browse_btn"))
+        self.adv_output_btn.configure(text=self.t("browse_btn"))
+        self.adv_template_btn.configure(text=self.t("browse_btn"))
+        self.adv_template_clear_btn.configure(text=self.t("clear_btn"))
+        self.adv_option_frame.configure(text=self.t("advanced_title"))
+        self.adv_recursive_check.configure(text=self.t("advanced_recursive"))
+
+        convert_text = self.t("converting_btn") if self.is_running else self.t("convert_btn")
+        self.std_paste_convert_btn.configure(text=convert_text)
+        self.std_single_convert_btn.configure(text=convert_text)
+        self.adv_convert_btn.configure(text=convert_text)
+
+    def _on_language_change(self) -> None:
+        self._refresh_texts()
+
+    def _on_edition_change(self) -> None:
+        edition = self.edition_var.get()
+        self.standard_frame.pack_forget()
+        self.advanced_frame.pack_forget()
+
+        if edition == "standard":
+            self.standard_frame.pack(fill=tk.X, pady=(0, 10))
+        else:
+            self.advanced_frame.pack(fill=tk.X, pady=(0, 10))
+
+    def _on_standard_mode_change(self) -> None:
+        mode = self.standard_mode_var.get()
+        self.standard_paste_panel.pack_forget()
+        self.standard_single_panel.pack_forget()
+
+        if mode == "paste":
+            self.standard_paste_panel.pack(fill=tk.X)
+        else:
+            self.standard_single_panel.pack(fill=tk.X)
+
+    def _on_advanced_mode_change(self) -> None:
+        folder_mode = self.advanced_mode_var.get() == "folder"
+        if self.is_running:
+            state = tk.DISABLED
+        else:
+            state = tk.NORMAL if folder_mode else tk.DISABLED
+        self.adv_recursive_check.configure(state=state)
 
     def _apply_startup_args(self) -> None:
         if len(sys.argv) < 2:
@@ -142,55 +552,78 @@ class Md2DocxApp(tk.Tk):
             return
 
         if arg_path.is_file():
-            self.mode_var.set("single")
-            self.input_path_var.set(str(arg_path))
-            if not self.output_dir_var.get():
-                self.output_dir_var.set(str(arg_path.parent / "docx_output"))
+            self.edition_var.set("standard")
+            self.standard_mode_var.set("single")
+            self.std_single_input_var.set(str(arg_path))
+            if not self.std_single_output_var.get():
+                self.std_single_output_var.set(str(arg_path.parent / "docx_output"))
         elif arg_path.is_dir():
-            self.mode_var.set("folder")
-            self.input_path_var.set(str(arg_path))
-            if not self.output_dir_var.get():
-                self.output_dir_var.set(str(arg_path / "docx_output"))
+            self.edition_var.set("advanced")
+            self.advanced_mode_var.set("folder")
+            self.adv_input_var.set(str(arg_path))
+            if not self.adv_output_var.get():
+                self.adv_output_var.set(str(arg_path / "docx_output"))
 
-        self._on_mode_change()
+        self._on_standard_mode_change()
+        self._on_advanced_mode_change()
+        self._on_edition_change()
 
-    def _pick_input(self) -> None:
-        if self.mode_var.get() == "single":
-            path = filedialog.askopenfilename(
-                title="Choose Markdown file",
-                filetypes=[("Markdown", "*.md *.markdown *.mdown *.mkd"), ("All files", "*.*")],
-            )
-        else:
-            path = filedialog.askdirectory(title="Choose source folder")
-
-        if path:
-            self.input_path_var.set(path)
-
-            if not self.output_dir_var.get():
-                path_obj = Path(path)
-                if self.mode_var.get() == "single":
-                    self.output_dir_var.set(str(path_obj.parent / "docx_output"))
-                else:
-                    self.output_dir_var.set(str(path_obj / "docx_output"))
-
-    def _pick_output_dir(self) -> None:
-        path = filedialog.askdirectory(title="Choose output folder")
-        if path:
-            self.output_dir_var.set(path)
-
-    def _pick_template(self) -> None:
+    def _pick_template(self, target_var: tk.StringVar) -> None:
         path = filedialog.askopenfilename(
-            title="Choose reference docx (optional)",
+            title=self.t("choose_template"),
             filetypes=[("Word docx", "*.docx")],
         )
         if path:
-            self.template_var.set(path)
+            target_var.set(path)
+
+    def _pick_std_paste_output(self) -> None:
+        path = filedialog.askdirectory(title=self.t("choose_output_folder"))
+        if path:
+            self.std_paste_output_var.set(path)
+
+    def _pick_std_single_input(self) -> None:
+        path = filedialog.askopenfilename(
+            title=self.t("choose_md_file"),
+            filetypes=[("Markdown", "*.md *.markdown *.mdown *.mkd"), ("All files", "*.*")],
+        )
+        if path:
+            self.std_single_input_var.set(path)
+            if not self.std_single_output_var.get():
+                path_obj = Path(path)
+                self.std_single_output_var.set(str(path_obj.parent / "docx_output"))
+
+    def _pick_std_single_output(self) -> None:
+        path = filedialog.askdirectory(title=self.t("choose_output_folder"))
+        if path:
+            self.std_single_output_var.set(path)
+
+    def _pick_adv_input(self) -> None:
+        if self.advanced_mode_var.get() == "single":
+            path = filedialog.askopenfilename(
+                title=self.t("choose_md_file"),
+                filetypes=[("Markdown", "*.md *.markdown *.mdown *.mkd"), ("All files", "*.*")],
+            )
+        else:
+            path = filedialog.askdirectory(title=self.t("choose_source_folder"))
+
+        if path:
+            self.adv_input_var.set(path)
+            if not self.adv_output_var.get():
+                path_obj = Path(path)
+                if self.advanced_mode_var.get() == "single":
+                    self.adv_output_var.set(str(path_obj.parent / "docx_output"))
+                else:
+                    self.adv_output_var.set(str(path_obj / "docx_output"))
+
+    def _pick_adv_output(self) -> None:
+        path = filedialog.askdirectory(title=self.t("choose_output_folder"))
+        if path:
+            self.adv_output_var.set(path)
 
     def _resolve_pandoc_path(self) -> str | None:
         pandoc_name = "pandoc.exe" if sys.platform.startswith("win") else "pandoc"
         candidates: list[Path] = []
 
-        # PyInstaller onefile: bundled files are extracted to _MEIPASS.
         if getattr(sys, "frozen", False):
             meipass = getattr(sys, "_MEIPASS", None)
             if meipass:
@@ -209,110 +642,298 @@ class Md2DocxApp(tk.Tk):
 
         return shutil.which("pandoc")
 
-    def _start_convert(self) -> None:
+    def _validate_template(self, template: str) -> bool:
+        if not template:
+            return True
+
+        template_path = Path(template)
+        if template_path.is_file() and template_path.suffix.lower() == ".docx":
+            return True
+
+        messagebox.showerror(self.t("invalid_template_title"), self.t("invalid_template_msg"))
+        return False
+
+    def _normalize_docx_name(self, name: str) -> str | None:
+        base = name.strip()
+        if base.lower().endswith(".docx"):
+            base = base[:-5]
+        base = base.strip()
+
+        if not base:
+            return None
+
+        if any(ch in INVALID_FILENAME_CHARS for ch in base):
+            return None
+
+        return f"{base}.docx"
+
+    def _set_running(self, running: bool) -> None:
+        self.is_running = running
+        state = tk.DISABLED if running else tk.NORMAL
+
+        for widget in self.interactive_widgets:
+            try:
+                widget.configure(state=state)
+            except tk.TclError:
+                pass
+
+        self._on_advanced_mode_change()
+        self._refresh_texts()
+
+    def _start_standard_paste_convert(self) -> None:
         if self.is_running:
             return
 
         pandoc_path = self._resolve_pandoc_path()
         if not pandoc_path:
-            messagebox.showerror(
-                "Pandoc Not Found",
-                "No bundled pandoc found, and pandoc is not available in PATH.",
-            )
+            messagebox.showerror(self.t("pandoc_not_found_title"), self.t("pandoc_not_found_msg"))
             return
 
-        input_path = self.input_path_var.get().strip()
-        output_dir = self.output_dir_var.get().strip()
-        template = self.template_var.get().strip()
+        content = self.std_paste_text.get("1.0", tk.END).strip()
+        output_dir = self.std_paste_output_var.get().strip()
+        filename = self.std_paste_filename_var.get().strip()
+        template = self.std_paste_template_var.get().strip()
 
-        if not input_path:
-            messagebox.showwarning("Missing Input", "Please choose an input file/folder.")
+        if not content:
+            messagebox.showwarning(self.t("missing_content_title"), self.t("missing_content_msg"))
             return
+
         if not output_dir:
-            messagebox.showwarning("Missing Output", "Please choose an output folder.")
+            messagebox.showwarning(self.t("missing_output_title"), self.t("missing_output_msg"))
             return
 
-        in_path = Path(input_path)
+        if not filename:
+            messagebox.showwarning(self.t("missing_filename_title"), self.t("missing_filename_msg"))
+            return
+
+        docx_name = self._normalize_docx_name(filename)
+        if not docx_name:
+            messagebox.showerror(self.t("invalid_filename_title"), self.t("invalid_filename_msg"))
+            return
+
+        if not self._validate_template(template):
+            return
+
         out_dir = Path(output_dir)
-
-        if self.mode_var.get() == "single":
-            if not in_path.is_file():
-                messagebox.showerror("Invalid Input", "Input should be a Markdown file.")
-                return
-            if in_path.suffix.lower() not in {".md", ".markdown", ".mdown", ".mkd"}:
-                messagebox.showerror("Invalid Input", "Selected file is not a Markdown file.")
-                return
-        else:
-            if not in_path.is_dir():
-                messagebox.showerror("Invalid Input", "Input should be a folder.")
-                return
-
-        if template:
-            template_path = Path(template)
-            if not template_path.is_file() or template_path.suffix.lower() != ".docx":
-                messagebox.showerror("Invalid Template", "Template must be an existing .docx file.")
-                return
+        dst = out_dir / docx_name
 
         self._set_running(True)
+        lang = self.lang_var.get()
         self._append_log("-" * 72)
-        self._append_log(f"Using pandoc: {pandoc_path}")
-        self._append_log(f"Mode: {self.mode_var.get()}")
-        self._append_log(f"Input: {in_path}")
-        self._append_log(f"Output: {out_dir}")
-        self._append_log(f"Template: {template if template else '(none)'}")
-
-        mode = self.mode_var.get()
-        recursive = self.recursive_var.get()
+        self._append_log(self.t("log_using_pandoc", lang=lang, pandoc=pandoc_path))
+        self._append_log(self.t("log_mode", lang=lang, mode=self.t("mode_standard_paste", lang=lang)))
+        self._append_log(self.t("log_output", lang=lang, output=out_dir))
+        self._append_log(self.t("log_template", lang=lang, template=(template if template else "(none)")))
+        self._append_log(self.t("log_target", lang=lang, target=dst))
 
         thread = threading.Thread(
-            target=self._convert_worker,
-            args=(in_path, out_dir, template, mode, recursive, pandoc_path),
+            target=self._convert_from_text_worker,
+            args=(content, dst, template, pandoc_path, lang),
             daemon=True,
         )
         thread.start()
 
-    def _convert_worker(
+    def _start_standard_single_convert(self) -> None:
+        if self.is_running:
+            return
+
+        pandoc_path = self._resolve_pandoc_path()
+        if not pandoc_path:
+            messagebox.showerror(self.t("pandoc_not_found_title"), self.t("pandoc_not_found_msg"))
+            return
+
+        input_path = self.std_single_input_var.get().strip()
+        output_dir = self.std_single_output_var.get().strip()
+        template = self.std_single_template_var.get().strip()
+
+        if not input_path:
+            messagebox.showwarning(self.t("missing_input_title"), self.t("missing_input_msg"))
+            return
+
+        if not output_dir:
+            messagebox.showwarning(self.t("missing_output_title"), self.t("missing_output_msg"))
+            return
+
+        src = Path(input_path)
+        if not src.is_file() or src.suffix.lower() not in MD_SUFFIXES:
+            messagebox.showerror(self.t("invalid_input_title"), self.t("invalid_input_file_msg"))
+            return
+
+        if not self._validate_template(template):
+            return
+
+        out_dir = Path(output_dir)
+        dst = out_dir / f"{src.stem}.docx"
+
+        self._set_running(True)
+        lang = self.lang_var.get()
+        self._append_log("-" * 72)
+        self._append_log(self.t("log_using_pandoc", lang=lang, pandoc=pandoc_path))
+        self._append_log(self.t("log_mode", lang=lang, mode=self.t("mode_standard_single", lang=lang)))
+        self._append_log(self.t("log_input", lang=lang, input=src))
+        self._append_log(self.t("log_output", lang=lang, output=out_dir))
+        self._append_log(self.t("log_template", lang=lang, template=(template if template else "(none)")))
+
+        thread = threading.Thread(
+            target=self._convert_single_file_worker,
+            args=(src, dst, template, pandoc_path, lang),
+            daemon=True,
+        )
+        thread.start()
+
+    def _start_advanced_convert(self) -> None:
+        if self.is_running:
+            return
+
+        pandoc_path = self._resolve_pandoc_path()
+        if not pandoc_path:
+            messagebox.showerror(self.t("pandoc_not_found_title"), self.t("pandoc_not_found_msg"))
+            return
+
+        mode = self.advanced_mode_var.get()
+        input_path = self.adv_input_var.get().strip()
+        output_dir = self.adv_output_var.get().strip()
+        template = self.adv_template_var.get().strip()
+        recursive = self.adv_recursive_var.get()
+
+        if not input_path:
+            messagebox.showwarning(self.t("missing_input_title"), self.t("missing_input_msg"))
+            return
+
+        if not output_dir:
+            messagebox.showwarning(self.t("missing_output_title"), self.t("missing_output_msg"))
+            return
+
+        src_path = Path(input_path)
+        if mode == "single":
+            if not src_path.is_file() or src_path.suffix.lower() not in MD_SUFFIXES:
+                messagebox.showerror(self.t("invalid_input_title"), self.t("invalid_input_file_msg"))
+                return
+        else:
+            if not src_path.is_dir():
+                messagebox.showerror(self.t("invalid_input_title"), self.t("invalid_input_folder_msg"))
+                return
+
+        if not self._validate_template(template):
+            return
+
+        out_dir = Path(output_dir)
+
+        self._set_running(True)
+        lang = self.lang_var.get()
+        mode_label = self.t("mode_advanced_single", lang=lang) if mode == "single" else self.t("mode_advanced_folder", lang=lang)
+        self._append_log("-" * 72)
+        self._append_log(self.t("log_using_pandoc", lang=lang, pandoc=pandoc_path))
+        self._append_log(self.t("log_mode", lang=lang, mode=mode_label))
+        self._append_log(self.t("log_input", lang=lang, input=src_path))
+        self._append_log(self.t("log_output", lang=lang, output=out_dir))
+        self._append_log(self.t("log_template", lang=lang, template=(template if template else "(none)")))
+
+        thread = threading.Thread(
+            target=self._convert_advanced_worker,
+            args=(src_path, out_dir, template, mode, recursive, pandoc_path, lang),
+            daemon=True,
+        )
+        thread.start()
+
+    def _convert_from_text_worker(
         self,
-        in_path: Path,
+        content: str,
+        dst: Path,
+        template: str,
+        pandoc_path: str,
+        lang: str,
+    ) -> None:
+        ok = 0
+        fail = 0
+
+        try:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                self._run_pandoc_text(content, dst, template, pandoc_path)
+                ok = 1
+                self.log_queue.put(self.t("log_ok", lang=lang))
+            except Exception as exc:
+                fail = 1
+                self.log_queue.put(self.t("log_fail", lang=lang, err=str(exc)))
+
+            self.log_queue.put("=" * 72)
+            self.log_queue.put(self.t("log_done", lang=lang, ok=ok, fail=fail))
+        finally:
+            self.log_queue.put("__UI_UNLOCK__")
+
+    def _convert_single_file_worker(
+        self,
+        src: Path,
+        dst: Path,
+        template: str,
+        pandoc_path: str,
+        lang: str,
+    ) -> None:
+        ok = 0
+        fail = 0
+
+        try:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            self.log_queue.put(f"[1/1] {src} -> {dst}")
+            try:
+                self._run_pandoc_file(src, dst, template, pandoc_path)
+                ok = 1
+                self.log_queue.put(self.t("log_ok", lang=lang))
+            except Exception as exc:
+                fail = 1
+                self.log_queue.put(self.t("log_fail", lang=lang, err=str(exc)))
+
+            self.log_queue.put("=" * 72)
+            self.log_queue.put(self.t("log_done", lang=lang, ok=ok, fail=fail))
+        finally:
+            self.log_queue.put("__UI_UNLOCK__")
+
+    def _convert_advanced_worker(
+        self,
+        src_path: Path,
         out_dir: Path,
         template: str,
         mode: str,
         recursive: bool,
         pandoc_path: str,
+        lang: str,
     ) -> None:
+        ok = 0
+        fail = 0
+
         try:
             out_dir.mkdir(parents=True, exist_ok=True)
-            md_files = self._collect_md_files(in_path, mode, recursive)
+            md_files = self._collect_md_files(src_path, mode, recursive)
 
             if not md_files:
-                self.log_queue.put("No markdown files found.")
+                self.log_queue.put(self.t("log_no_md", lang=lang))
+                self.log_queue.put("=" * 72)
+                self.log_queue.put(self.t("log_done", lang=lang, ok=0, fail=0))
                 return
 
-            self.log_queue.put(f"Found {len(md_files)} markdown file(s).")
-
-            ok = 0
-            fail = 0
+            self.log_queue.put(self.t("log_found_files", lang=lang, count=len(md_files)))
 
             for idx, src in enumerate(md_files, start=1):
                 if mode == "single":
                     dst = out_dir / f"{src.stem}.docx"
                 else:
-                    rel = src.relative_to(in_path)
+                    rel = src.relative_to(src_path)
                     dst = out_dir / rel.with_suffix(".docx")
 
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 self.log_queue.put(f"[{idx}/{len(md_files)}] {src} -> {dst}")
 
                 try:
-                    self._run_pandoc(src, dst, template, pandoc_path)
+                    self._run_pandoc_file(src, dst, template, pandoc_path)
                     ok += 1
-                    self.log_queue.put("  OK")
+                    self.log_queue.put(self.t("log_ok", lang=lang))
                 except Exception as exc:
                     fail += 1
-                    self.log_queue.put(f"  FAIL: {exc}")
+                    self.log_queue.put(self.t("log_fail", lang=lang, err=str(exc)))
 
             self.log_queue.put("=" * 72)
-            self.log_queue.put(f"Done. Success: {ok}, Failed: {fail}")
+            self.log_queue.put(self.t("log_done", lang=lang, ok=ok, fail=fail))
         finally:
             self.log_queue.put("__UI_UNLOCK__")
 
@@ -320,12 +941,11 @@ class Md2DocxApp(tk.Tk):
         if mode == "single":
             return [in_path]
 
-        suffixes = {".md", ".markdown", ".mdown", ".mkd"}
         pattern = "**/*" if recursive else "*"
         files = sorted(in_path.glob(pattern))
-        return [f for f in files if f.is_file() and f.suffix.lower() in suffixes]
+        return [f for f in files if f.is_file() and f.suffix.lower() in MD_SUFFIXES]
 
-    def _run_pandoc(self, src: Path, dst: Path, template: str, pandoc_path: str) -> None:
+    def _run_pandoc_file(self, src: Path, dst: Path, template: str, pandoc_path: str) -> None:
         cmd = [
             pandoc_path,
             str(src),
@@ -339,23 +959,26 @@ class Md2DocxApp(tk.Tk):
             cmd.extend(["--reference-doc", template])
 
         result = subprocess.run(cmd, capture_output=True, text=True)
-
         if result.returncode != 0:
             err = result.stderr.strip() or result.stdout.strip() or "pandoc conversion failed"
             raise RuntimeError(err)
 
-    def _set_running(self, running: bool) -> None:
-        self.is_running = running
-        state = tk.DISABLED if running else tk.NORMAL
+    def _run_pandoc_text(self, content: str, dst: Path, template: str, pandoc_path: str) -> None:
+        cmd = [
+            pandoc_path,
+            "-f",
+            "markdown",
+            "-o",
+            str(dst),
+        ]
 
-        self.convert_btn.configure(state=state, text=("Converting..." if running else "Convert"))
-        self.input_btn.configure(state=state)
-        self.output_btn.configure(state=state)
-        self.template_btn.configure(state=state)
-        self.clear_template_btn.configure(state=state)
-        self.input_entry.configure(state=state)
-        self.output_entry.configure(state=state)
-        self.template_entry.configure(state=state)
+        if template:
+            cmd.extend(["--reference-doc", template])
+
+        result = subprocess.run(cmd, input=content, capture_output=True, text=True)
+        if result.returncode != 0:
+            err = result.stderr.strip() or result.stdout.strip() or "pandoc conversion failed"
+            raise RuntimeError(err)
 
     def _append_log(self, text: str) -> None:
         self.log_box.configure(state=tk.NORMAL)
