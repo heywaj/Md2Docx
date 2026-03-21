@@ -101,6 +101,7 @@ build_exe.bat
 Workflow file:
 
 - `.github/workflows/build-windows-exe.yml`
+- `.github/workflows/release-windows-exe.yml`
 
 Trigger options:
 
@@ -110,6 +111,21 @@ Trigger options:
 Result:
 
 - Download artifact `Md2Docx-windows-exe` from Actions page
+
+## Publish release with Windows exe
+
+When you push a tag like `v1.0.0`, GitHub Actions will:
+
+1. Build `Md2Docx.exe` on Windows runner
+2. Create/update the GitHub Release for that tag
+3. Upload `Md2Docx.exe` as release asset
+
+Commands:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Usage
 
