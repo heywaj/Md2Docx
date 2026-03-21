@@ -18,6 +18,11 @@ TRANSLATIONS = {
         "header_subtitle": "现代化转换器 · 支持中英文切换、标准/高级双模式",
         "language_group": "Language / 语言",
         "edition_group": "界面模式",
+        "settings_show_btn": "展开设置",
+        "settings_hide_btn": "收起设置",
+        "logs_show_btn": "展开日志",
+        "logs_hide_btn": "收起日志",
+        "logs_title": "日志",
         "edition_standard": "标准模式",
         "edition_advanced": "高级模式",
         "standard_title": "标准模式",
@@ -40,6 +45,12 @@ TRANSLATIONS = {
         "clear_btn": "清空",
         "convert_btn": "转换",
         "converting_btn": "转换中...",
+        "status_ready": "就绪",
+        "status_running": "转换中，请稍候...",
+        "status_success": "转换成功",
+        "status_fail": "转换失败",
+        "status_partial": "部分成功",
+        "status_empty": "未执行转换",
         "log_ready": "已就绪：请选择输入并点击转换。",
         "mode_standard_paste": "标准-复制模式",
         "mode_standard_single": "标准-单文件模式",
@@ -78,6 +89,14 @@ TRANSLATIONS = {
         "log_done": "完成。成功：{ok}，失败：{fail}",
         "log_ok": "  成功",
         "log_fail": "  失败：{err}",
+        "result_success_title": "转换成功",
+        "result_success_msg": "已成功生成 {ok} 个文件。",
+        "result_fail_title": "转换失败",
+        "result_fail_msg": "转换失败 {fail} 个文件。",
+        "result_partial_title": "部分成功",
+        "result_partial_msg": "成功 {ok} 个，失败 {fail} 个。",
+        "result_empty_title": "未执行转换",
+        "result_empty_msg": "没有可转换的内容或文件。",
     },
     "en": {
         "window_title": "Md2Docx - Markdown to Word",
@@ -85,6 +104,11 @@ TRANSLATIONS = {
         "header_subtitle": "Modern converter with bilingual UI and Standard/Advanced workflows",
         "language_group": "Language / 语言",
         "edition_group": "Interface Mode",
+        "settings_show_btn": "Show Settings",
+        "settings_hide_btn": "Hide Settings",
+        "logs_show_btn": "Show Logs",
+        "logs_hide_btn": "Hide Logs",
+        "logs_title": "Logs",
         "edition_standard": "Standard",
         "edition_advanced": "Advanced",
         "standard_title": "Standard Mode",
@@ -107,6 +131,12 @@ TRANSLATIONS = {
         "clear_btn": "Clear",
         "convert_btn": "Convert",
         "converting_btn": "Converting...",
+        "status_ready": "Ready",
+        "status_running": "Converting, please wait...",
+        "status_success": "Success",
+        "status_fail": "Failed",
+        "status_partial": "Partial Success",
+        "status_empty": "No Conversion",
         "log_ready": "Ready. Choose input and click Convert.",
         "mode_standard_paste": "Standard-Paste",
         "mode_standard_single": "Standard-Single",
@@ -145,6 +175,14 @@ TRANSLATIONS = {
         "log_done": "Done. Success: {ok}, Failed: {fail}",
         "log_ok": "  OK",
         "log_fail": "  FAIL: {err}",
+        "result_success_title": "Conversion Succeeded",
+        "result_success_msg": "Generated {ok} file(s) successfully.",
+        "result_fail_title": "Conversion Failed",
+        "result_fail_msg": "Failed to generate {fail} file(s).",
+        "result_partial_title": "Partial Success",
+        "result_partial_msg": "Success: {ok}, Failed: {fail}.",
+        "result_empty_title": "No Conversion",
+        "result_empty_msg": "No content or files were converted.",
     },
 }
 
@@ -200,9 +238,12 @@ class Md2DocxApp(tk.Tk):
         self.adv_template_var = tk.StringVar()
         self.adv_recursive_var = tk.BooleanVar(value=True)
 
-        self.log_queue: queue.Queue[str] = queue.Queue()
+        self.log_queue: queue.Queue[object] = queue.Queue()
         self.is_running = False
         self.paste_placeholder_active = False
+        self.settings_visible = False
+        self.log_visible = False
+        self.status_kind = "ready"
 
         self.interactive_widgets: list[tk.Widget] = []
 
@@ -212,6 +253,7 @@ class Md2DocxApp(tk.Tk):
         self._setup_paste_placeholder()
         self._apply_startup_args()
         self._append_log(self.t("log_ready"))
+        self._set_status("ready")
         self.after(120, self._drain_log_queue)
 
     def t(self, key: str, lang: str | None = None, **kwargs: object) -> str:
@@ -231,7 +273,17 @@ class Md2DocxApp(tk.Tk):
         self.header_subtitle_label = tk.Label(self.header_frame, anchor="w")
         self.header_subtitle_label.pack(fill=tk.X, pady=(2, 0))
 
-        top = tk.Frame(root)
+        self.toolbar_frame = tk.Frame(root)
+        self.toolbar_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.settings_toggle_btn = tk.Button(self.toolbar_frame, command=self._toggle_settings_panel)
+        self.settings_toggle_btn.pack(side=tk.RIGHT, padx=(8, 0))
+        self.log_toggle_btn = tk.Button(self.toolbar_frame, command=self._toggle_log_panel)
+        self.log_toggle_btn.pack(side=tk.RIGHT)
+
+        self.settings_panel = tk.Frame(root)
+
+        top = tk.Frame(self.settings_panel)
         top.pack(fill=tk.X, pady=(0, 10))
 
         self.edition_frame = tk.LabelFrame(top, padx=10, pady=8)
@@ -280,9 +332,15 @@ class Md2DocxApp(tk.Tk):
         self._build_standard_frame()
         self._build_advanced_frame()
 
-        self.log_box = ScrolledText(root, height=12, wrap=tk.WORD)
+        self.log_panel = tk.LabelFrame(root, padx=10, pady=10)
+        self.log_box = ScrolledText(self.log_panel, height=10, wrap=tk.WORD)
         self.log_box.pack(fill=tk.BOTH, expand=True)
         self.log_box.configure(state=tk.DISABLED)
+
+        self.status_frame = tk.Frame(root, pady=8)
+        self.status_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        self.status_label = tk.Label(self.status_frame, anchor="w")
+        self.status_label.pack(fill=tk.X)
 
         self._register_interactive_widgets()
         self._on_standard_mode_change()
@@ -318,7 +376,7 @@ class Md2DocxApp(tk.Tk):
         self.std_paste_hint_label = tk.Label(self.standard_paste_content_frame, anchor="w", justify=tk.LEFT)
         self.std_paste_hint_label.pack(anchor="w", pady=(2, 6))
 
-        self.std_paste_text = ScrolledText(self.standard_paste_content_frame, height=12, wrap=tk.WORD)
+        self.std_paste_text = ScrolledText(self.standard_paste_content_frame, height=8, wrap=tk.WORD)
         self.std_paste_text.pack(fill=tk.X, pady=(4, 8))
 
         self.standard_paste_form_frame = tk.Frame(self.standard_paste_panel)
@@ -481,6 +539,8 @@ class Md2DocxApp(tk.Tk):
 
     def _register_interactive_widgets(self) -> None:
         self.interactive_widgets = [
+            self.settings_toggle_btn,
+            self.log_toggle_btn,
             self.edition_standard_radio,
             self.edition_advanced_radio,
             self.lang_zh_radio,
@@ -528,6 +588,9 @@ class Md2DocxApp(tk.Tk):
             fg=self.colors["muted"],
         )
 
+        self._style_secondary_button(self.settings_toggle_btn)
+        self._style_secondary_button(self.log_toggle_btn)
+
         self._style_primary_button(self.std_paste_convert_btn)
         self._style_primary_button(self.std_single_convert_btn)
         self._style_primary_button(self.adv_convert_btn)
@@ -569,6 +632,14 @@ class Md2DocxApp(tk.Tk):
             highlightbackground=self.colors["border"],
             highlightcolor=self.colors["primary"],
             font=self.fonts["mono"],
+        )
+        self.status_frame.configure(bg=self.colors["card"])
+        self.status_label.configure(
+            bg=self.colors["card"],
+            fg=self.colors["muted"],
+            font=self.fonts["heading"],
+            padx=10,
+            pady=6,
         )
 
     def _style_widget_tree(self, widget: tk.Misc) -> None:
@@ -711,6 +782,14 @@ class Md2DocxApp(tk.Tk):
         self.title(self.t("window_title"))
         self.header_title_label.configure(text=self.t("header_title"))
         self.header_subtitle_label.configure(text=self.t("header_subtitle"))
+        self.log_panel.configure(text=self.t("logs_title"))
+
+        self.settings_toggle_btn.configure(
+            text=self.t("settings_hide_btn") if self.settings_visible else self.t("settings_show_btn")
+        )
+        self.log_toggle_btn.configure(
+            text=self.t("logs_hide_btn") if self.log_visible else self.t("logs_show_btn")
+        )
 
         self.lang_frame.configure(text=self.t("language_group"))
         self.edition_frame.configure(text=self.t("edition_group"))
@@ -764,16 +843,92 @@ class Md2DocxApp(tk.Tk):
 
     def _on_language_change(self) -> None:
         self._refresh_texts()
+        self._set_status(self.status_kind)
+
+    def _toggle_settings_panel(self) -> None:
+        if self.is_running:
+            return
+
+        self.settings_visible = not self.settings_visible
+        if self.settings_visible:
+            before_widget = self.standard_frame if self.edition_var.get() == "standard" else self.advanced_frame
+            self.settings_panel.pack(fill=tk.X, pady=(0, 8), before=before_widget)
+        else:
+            self.settings_panel.pack_forget()
+        self._refresh_texts()
+
+    def _toggle_log_panel(self) -> None:
+        self.log_visible = not self.log_visible
+        if self.log_visible:
+            self.log_panel.pack(fill=tk.BOTH, expand=True, pady=(0, 8), before=self.status_frame)
+        else:
+            self.log_panel.pack_forget()
+        self._refresh_texts()
+
+    def _set_status(self, kind: str) -> None:
+        self.status_kind = kind
+        if kind == "running":
+            text = self.t("status_running")
+            color = self.colors["primary"]
+        elif kind == "success":
+            text = self.t("status_success")
+            color = "#15803d"
+        elif kind == "partial":
+            text = self.t("status_partial")
+            color = "#b45309"
+        elif kind == "fail":
+            text = self.t("status_fail")
+            color = "#b91c1c"
+        elif kind == "empty":
+            text = self.t("status_empty")
+            color = self.colors["muted"]
+        else:
+            text = self.t("status_ready")
+            color = self.colors["muted"]
+
+        self.status_label.configure(text=text, fg=color)
+
+    def _handle_result(self, ok: int, fail: int, lang: str) -> None:
+        if ok > 0 and fail == 0:
+            self._set_status("success")
+            messagebox.showinfo(
+                self.t("result_success_title", lang=lang),
+                self.t("result_success_msg", lang=lang, ok=ok),
+            )
+            return
+
+        if ok > 0 and fail > 0:
+            self._set_status("partial")
+            messagebox.showwarning(
+                self.t("result_partial_title", lang=lang),
+                self.t("result_partial_msg", lang=lang, ok=ok, fail=fail),
+            )
+            return
+
+        if ok == 0 and fail == 0:
+            self._set_status("empty")
+            messagebox.showwarning(
+                self.t("result_empty_title", lang=lang),
+                self.t("result_empty_msg", lang=lang),
+            )
+            return
+
+        self._set_status("fail")
+        messagebox.showerror(
+            self.t("result_fail_title", lang=lang),
+            self.t("result_fail_msg", lang=lang, fail=fail),
+        )
 
     def _on_edition_change(self) -> None:
         edition = self.edition_var.get()
         self.standard_frame.pack_forget()
         self.advanced_frame.pack_forget()
+        before_widget: tk.Widget = self.log_panel if self.log_visible else self.status_frame
 
         if edition == "standard":
-            self.standard_frame.pack(fill=tk.X, pady=(0, 10))
+            self.standard_frame.pack(fill=tk.X, pady=(0, 10), before=before_widget)
         else:
-            self.advanced_frame.pack(fill=tk.X, pady=(0, 10))
+            self.advanced_frame.pack(fill=tk.X, pady=(0, 10), before=before_widget)
 
     def _on_standard_mode_change(self) -> None:
         mode = self.standard_mode_var.get()
@@ -970,6 +1125,7 @@ class Md2DocxApp(tk.Tk):
         dst = out_dir / docx_name
 
         self._set_running(True)
+        self._set_status("running")
         lang = self.lang_var.get()
         self._append_log("-" * 72)
         self._append_log(self.t("log_using_pandoc", lang=lang, pandoc=pandoc_path))
@@ -1018,6 +1174,7 @@ class Md2DocxApp(tk.Tk):
         dst = out_dir / f"{src.stem}.docx"
 
         self._set_running(True)
+        self._set_status("running")
         lang = self.lang_var.get()
         self._append_log("-" * 72)
         self._append_log(self.t("log_using_pandoc", lang=lang, pandoc=pandoc_path))
@@ -1072,6 +1229,7 @@ class Md2DocxApp(tk.Tk):
         out_dir = Path(output_dir)
 
         self._set_running(True)
+        self._set_status("running")
         lang = self.lang_var.get()
         mode_label = self.t("mode_advanced_single", lang=lang) if mode == "single" else self.t("mode_advanced_folder", lang=lang)
         self._append_log("-" * 72)
@@ -1111,6 +1269,7 @@ class Md2DocxApp(tk.Tk):
 
             self.log_queue.put("=" * 72)
             self.log_queue.put(self.t("log_done", lang=lang, ok=ok, fail=fail))
+            self.log_queue.put({"type": "result", "ok": ok, "fail": fail, "lang": lang})
         finally:
             self.log_queue.put("__UI_UNLOCK__")
 
@@ -1138,6 +1297,7 @@ class Md2DocxApp(tk.Tk):
 
             self.log_queue.put("=" * 72)
             self.log_queue.put(self.t("log_done", lang=lang, ok=ok, fail=fail))
+            self.log_queue.put({"type": "result", "ok": ok, "fail": fail, "lang": lang})
         finally:
             self.log_queue.put("__UI_UNLOCK__")
 
@@ -1162,6 +1322,7 @@ class Md2DocxApp(tk.Tk):
                 self.log_queue.put(self.t("log_no_md", lang=lang))
                 self.log_queue.put("=" * 72)
                 self.log_queue.put(self.t("log_done", lang=lang, ok=0, fail=0))
+                self.log_queue.put({"type": "result", "ok": 0, "fail": 0, "lang": lang})
                 return
 
             self.log_queue.put(self.t("log_found_files", lang=lang, count=len(md_files)))
@@ -1186,6 +1347,7 @@ class Md2DocxApp(tk.Tk):
 
             self.log_queue.put("=" * 72)
             self.log_queue.put(self.t("log_done", lang=lang, ok=ok, fail=fail))
+            self.log_queue.put({"type": "result", "ok": ok, "fail": fail, "lang": lang})
         finally:
             self.log_queue.put("__UI_UNLOCK__")
 
@@ -1220,6 +1382,8 @@ class Md2DocxApp(tk.Tk):
             pandoc_path,
             "-f",
             "markdown",
+            "-t",
+            "docx",
             "-o",
             str(dst),
         ]
@@ -1227,9 +1391,11 @@ class Md2DocxApp(tk.Tk):
         if template:
             cmd.extend(["--reference-doc", template])
 
-        result = subprocess.run(cmd, input=content, capture_output=True, text=True)
+        result = subprocess.run(cmd, input=content.encode("utf-8"), capture_output=True)
         if result.returncode != 0:
-            err = result.stderr.strip() or result.stdout.strip() or "pandoc conversion failed"
+            stderr = result.stderr.decode("utf-8", errors="replace").strip() if result.stderr else ""
+            stdout = result.stdout.decode("utf-8", errors="replace").strip() if result.stdout else ""
+            err = stderr or stdout or "pandoc conversion failed"
             raise RuntimeError(err)
 
     def _append_log(self, text: str) -> None:
@@ -1244,6 +1410,12 @@ class Md2DocxApp(tk.Tk):
                 msg = self.log_queue.get_nowait()
                 if msg == "__UI_UNLOCK__":
                     self._set_running(False)
+                elif isinstance(msg, dict) and msg.get("type") == "result":
+                    self._handle_result(
+                        int(msg.get("ok", 0)),
+                        int(msg.get("fail", 0)),
+                        str(msg.get("lang", self.lang_var.get())),
+                    )
                 else:
                     self._append_log(msg)
         except queue.Empty:
