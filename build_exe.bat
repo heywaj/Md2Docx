@@ -16,7 +16,20 @@ if errorlevel 1 (
   exit /b 1
 )
 
-pyinstaller --noconfirm --clean --onefile --windowed --name %APP_NAME% %ENTRY%
+set "PANDOC_PATH="
+for /f "delims=" %%I in ('where pandoc 2^>nul') do (
+  set "PANDOC_PATH=%%I"
+  goto :pandoc_found
+)
+
+echo [ERROR] pandoc not found.
+echo For build machine, install pandoc or make it available in PATH.
+exit /b 1
+
+:pandoc_found
+echo [INFO] Bundling pandoc from: %PANDOC_PATH%
+
+pyinstaller --noconfirm --clean --onefile --windowed --name %APP_NAME% --add-binary "%PANDOC_PATH%;." %ENTRY%
 if errorlevel 1 (
   echo [ERROR] Build failed.
   exit /b 1

@@ -8,6 +8,7 @@ A lightweight GUI tool for converting Markdown files to Word (`.docx`) using `pa
 - Folder batch conversion: convert all Markdown files in a folder
 - Optional `reference.docx` template for custom Word style
 - Runs as Python script or packaged `.exe`
+- Packaged `.exe` can include bundled `pandoc.exe` (no runtime install needed)
 - Startup argument support (for drag-and-drop onto `.exe`)
 
 ## Files
@@ -27,8 +28,10 @@ git commit -m "init md2docx gui tool"
 ## Prerequisites
 
 - Python 3.9+
-- `pandoc` installed and available in `PATH`
-- (for building exe) `PyInstaller`
+- `pandoc` installed and available in `PATH` (for running from source or building exe)
+- `PyInstaller` (for building exe)
+
+For end users of `Md2Docx.exe`, no separate pandoc installation is required.
 
 Check pandoc:
 
@@ -92,6 +95,8 @@ pip install -r requirements-build.txt
 build_exe.bat
 ```
 
+`build_exe.bat` will find `pandoc.exe` from `PATH` and bundle it into the final exe.
+
 3. Output:
 
 - `dist\\Md2Docx.exe`
@@ -147,4 +152,4 @@ The app will pre-fill input/output fields automatically.
 
 - In folder mode, output keeps the same relative subfolder structure.
 - Supported Markdown extensions: `.md`, `.markdown`, `.mdown`, `.mkd`.
-- If the app says pandoc is not found, add pandoc to system `PATH` and restart.
+- If using source mode (`python app.py`) and pandoc is missing, add pandoc to `PATH`.

@@ -186,15 +186,38 @@ class Md2DocxApp(tk.Tk):
         if path:
             self.template_var.set(path)
 
+    def _resolve_pandoc_path(self) -> str | None:
+        pandoc_name = "pandoc.exe" if sys.platform.startswith("win") else "pandoc"
+        candidates: list[Path] = []
+
+        # PyInstaller onefile: bundled files are extracted to _MEIPASS.
+        if getattr(sys, "frozen", False):
+            meipass = getattr(sys, "_MEIPASS", None)
+            if meipass:
+                candidates.append(Path(meipass) / pandoc_name)
+
+            exe_dir = Path(sys.executable).resolve().parent
+            candidates.append(exe_dir / pandoc_name)
+
+        script_dir = Path(__file__).resolve().parent
+        candidates.append(script_dir / pandoc_name)
+        candidates.append(script_dir / "vendor" / pandoc_name)
+
+        for candidate in candidates:
+            if candidate.is_file():
+                return str(candidate)
+
+        return shutil.which("pandoc")
+
     def _start_convert(self) -> None:
         if self.is_running:
             return
 
-        pandoc_path = shutil.which("pandoc")
+        pandoc_path = self._resolve_pandoc_path()
         if not pandoc_path:
             messagebox.showerror(
                 "Pandoc Not Found",
-                "pandoc is not available in PATH. Install pandoc and restart this app.",
+                "No bundled pandoc found, and pandoc is not available in PATH.",
             )
             return
 
@@ -243,7 +266,7 @@ class Md2DocxApp(tk.Tk):
 
         thread = threading.Thread(
             target=self._convert_worker,
-            args=(in_path, out_dir, template, mode, recursive),
+            args=(in_path, out_dir, template, mode, recursive, pandoc_path),
             daemon=True,
         )
         thread.start()
@@ -255,6 +278,7 @@ class Md2DocxApp(tk.Tk):
         template: str,
         mode: str,
         recursive: bool,
+        pandoc_path: str,
     ) -> None:
         try:
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -280,7 +304,7 @@ class Md2DocxApp(tk.Tk):
                 self.log_queue.put(f"[{idx}/{len(md_files)}] {src} -> {dst}")
 
                 try:
-                    self._run_pandoc(src, dst, template)
+                    self._run_pandoc(src, dst, template, pandoc_path)
                     ok += 1
                     self.log_queue.put("  OK")
                 except Exception as exc:
@@ -301,9 +325,9 @@ class Md2DocxApp(tk.Tk):
         files = sorted(in_path.glob(pattern))
         return [f for f in files if f.is_file() and f.suffix.lower() in suffixes]
 
-    def _run_pandoc(self, src: Path, dst: Path, template: str) -> None:
+    def _run_pandoc(self, src: Path, dst: Path, template: str, pandoc_path: str) -> None:
         cmd = [
-            "pandoc",
+            pandoc_path,
             str(src),
             "-o",
             str(dst),
