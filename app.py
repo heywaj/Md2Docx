@@ -265,53 +265,59 @@ class Md2DocxApp(tk.Tk):
         self.standard_single_radio.pack(side=tk.LEFT)
 
         self.standard_paste_panel = tk.Frame(self.standard_frame)
-        self.std_paste_content_label = tk.Label(self.standard_paste_panel)
+        self.standard_paste_content_frame = tk.Frame(self.standard_paste_panel)
+        self.standard_paste_content_frame.pack(fill=tk.X)
+
+        self.std_paste_content_label = tk.Label(self.standard_paste_content_frame)
         self.std_paste_content_label.pack(anchor="w")
 
-        self.std_paste_text = ScrolledText(self.standard_paste_panel, height=12, wrap=tk.WORD)
+        self.std_paste_text = ScrolledText(self.standard_paste_content_frame, height=12, wrap=tk.WORD)
         self.std_paste_text.pack(fill=tk.X, pady=(4, 8))
 
-        self.std_paste_output_label = tk.Label(self.standard_paste_panel)
-        self.std_paste_output_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=4)
-        self.std_paste_output_entry = tk.Entry(self.standard_paste_panel, textvariable=self.std_paste_output_var)
-        self.std_paste_output_entry.grid(row=2, column=1, sticky="ew", pady=4)
-        self.std_paste_output_btn = tk.Button(self.standard_paste_panel, command=self._pick_std_paste_output)
-        self.std_paste_output_btn.grid(row=2, column=2, padx=(8, 0), pady=4)
+        self.standard_paste_form_frame = tk.Frame(self.standard_paste_panel)
+        self.standard_paste_form_frame.pack(fill=tk.X)
 
-        self.std_paste_filename_label = tk.Label(self.standard_paste_panel)
-        self.std_paste_filename_label.grid(row=3, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_paste_output_label = tk.Label(self.standard_paste_form_frame)
+        self.std_paste_output_label.grid(row=0, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_paste_output_entry = tk.Entry(self.standard_paste_form_frame, textvariable=self.std_paste_output_var)
+        self.std_paste_output_entry.grid(row=0, column=1, sticky="ew", pady=4)
+        self.std_paste_output_btn = tk.Button(self.standard_paste_form_frame, command=self._pick_std_paste_output)
+        self.std_paste_output_btn.grid(row=0, column=2, padx=(8, 0), pady=4)
+
+        self.std_paste_filename_label = tk.Label(self.standard_paste_form_frame)
+        self.std_paste_filename_label.grid(row=1, column=0, sticky="w", padx=(0, 8), pady=4)
         self.std_paste_filename_entry = tk.Entry(
-            self.standard_paste_panel,
+            self.standard_paste_form_frame,
             textvariable=self.std_paste_filename_var,
         )
-        self.std_paste_filename_entry.grid(row=3, column=1, sticky="ew", pady=4)
+        self.std_paste_filename_entry.grid(row=1, column=1, sticky="ew", pady=4)
 
-        self.std_paste_template_label = tk.Label(self.standard_paste_panel)
-        self.std_paste_template_label.grid(row=4, column=0, sticky="w", padx=(0, 8), pady=4)
-        self.std_paste_template_entry = tk.Entry(self.standard_paste_panel, textvariable=self.std_paste_template_var)
-        self.std_paste_template_entry.grid(row=4, column=1, sticky="ew", pady=4)
+        self.std_paste_template_label = tk.Label(self.standard_paste_form_frame)
+        self.std_paste_template_label.grid(row=2, column=0, sticky="w", padx=(0, 8), pady=4)
+        self.std_paste_template_entry = tk.Entry(self.standard_paste_form_frame, textvariable=self.std_paste_template_var)
+        self.std_paste_template_entry.grid(row=2, column=1, sticky="ew", pady=4)
         self.std_paste_template_btn = tk.Button(
-            self.standard_paste_panel,
+            self.standard_paste_form_frame,
             command=lambda: self._pick_template(self.std_paste_template_var),
         )
-        self.std_paste_template_btn.grid(row=4, column=2, padx=(8, 0), pady=4)
+        self.std_paste_template_btn.grid(row=2, column=2, padx=(8, 0), pady=4)
         self.std_paste_template_clear_btn = tk.Button(
-            self.standard_paste_panel,
+            self.standard_paste_form_frame,
             width=8,
             command=lambda: self.std_paste_template_var.set(""),
         )
-        self.std_paste_template_clear_btn.grid(row=4, column=3, padx=(8, 0), pady=4)
+        self.std_paste_template_clear_btn.grid(row=2, column=3, padx=(8, 0), pady=4)
 
         self.std_paste_convert_btn = tk.Button(
-            self.standard_paste_panel,
+            self.standard_paste_form_frame,
             width=18,
             command=self._start_standard_paste_convert,
             bg="#1f6feb",
             fg="white",
         )
-        self.std_paste_convert_btn.grid(row=5, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        self.std_paste_convert_btn.grid(row=3, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
-        self.standard_paste_panel.columnconfigure(1, weight=1)
+        self.standard_paste_form_frame.columnconfigure(1, weight=1)
 
         self.standard_single_panel = tk.Frame(self.standard_frame)
 
