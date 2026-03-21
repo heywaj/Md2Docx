@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*.spec
+build/
+dist/
+.venv/
+test_out_single/
+test_out_batch/
