@@ -5,6 +5,7 @@ A lightweight GUI tool for converting Markdown files to Word (`.docx`) using `pa
 ## Features
 
 - Chinese/English UI switch
+- Modernized UI style (larger action buttons, cleaner card layout, improved readability)
 - Two-tier interface: `Standard` (default) and `Advanced`
 - Standard mode:
   - Paste mode: paste markdown text, set output dir and file name, convert directly

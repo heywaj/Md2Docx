@@ -14,6 +14,8 @@ from tkinter.scrolledtext import ScrolledText
 TRANSLATIONS = {
     "zh": {
         "window_title": "Md2Docx - Markdown 转 Word",
+        "header_title": "Markdown → Word",
+        "header_subtitle": "现代化转换器 · 支持中英文切换、标准/高级双模式",
         "language_group": "Language / 语言",
         "edition_group": "界面模式",
         "edition_standard": "标准模式",
@@ -32,6 +34,8 @@ TRANSLATIONS = {
         "filename_label": "文件名：",
         "template_label": "模板：",
         "markdown_content_label": "Markdown 内容：",
+        "paste_hint": "提示：直接粘贴 Markdown 内容，支持标题、列表、表格等常见语法。",
+        "paste_placeholder": "请将 Markdown 内容粘贴到这里，然后点击“转换”...",
         "browse_btn": "浏览",
         "clear_btn": "清空",
         "convert_btn": "转换",
@@ -68,6 +72,7 @@ TRANSLATIONS = {
         "log_output": "输出：{output}",
         "log_template": "模板：{template}",
         "log_target": "目标：{target}",
+        "none_text": "（无）",
         "log_found_files": "找到 {count} 个 Markdown 文件。",
         "log_no_md": "未找到 Markdown 文件。",
         "log_done": "完成。成功：{ok}，失败：{fail}",
@@ -76,6 +81,8 @@ TRANSLATIONS = {
     },
     "en": {
         "window_title": "Md2Docx - Markdown to Word",
+        "header_title": "Markdown -> Word",
+        "header_subtitle": "Modern converter with bilingual UI and Standard/Advanced workflows",
         "language_group": "Language / 语言",
         "edition_group": "Interface Mode",
         "edition_standard": "Standard",
@@ -94,6 +101,8 @@ TRANSLATIONS = {
         "filename_label": "File name:",
         "template_label": "Template:",
         "markdown_content_label": "Markdown content:",
+        "paste_hint": "Tip: paste markdown directly. Headings, lists and tables are supported.",
+        "paste_placeholder": "Paste Markdown content here, then click Convert...",
         "browse_btn": "Browse",
         "clear_btn": "Clear",
         "convert_btn": "Convert",
@@ -130,6 +139,7 @@ TRANSLATIONS = {
         "log_output": "Output: {output}",
         "log_template": "Template: {template}",
         "log_target": "Target: {target}",
+        "none_text": "(none)",
         "log_found_files": "Found {count} markdown file(s).",
         "log_no_md": "No markdown files found.",
         "log_done": "Done. Success: {ok}, Failed: {fail}",
@@ -145,8 +155,32 @@ INVALID_FILENAME_CHARS = set('<>:"/\\|?*')
 class Md2DocxApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.geometry("980x740")
-        self.minsize(860, 620)
+        self.colors = {
+            "bg": "#eef2ff",
+            "card": "#ffffff",
+            "text": "#0f172a",
+            "muted": "#64748b",
+            "primary": "#2563eb",
+            "primary_hover": "#1d4ed8",
+            "border": "#cbd5e1",
+            "button": "#e2e8f0",
+            "button_hover": "#cbd5e1",
+            "log_bg": "#0b1220",
+            "log_fg": "#dbe7ff",
+        }
+        self.fonts = {
+            "body": ("Segoe UI", 10),
+            "heading": ("Segoe UI Semibold", 10),
+            "title": ("Segoe UI Semibold", 18),
+            "subtitle": ("Segoe UI", 10),
+            "button": ("Segoe UI Semibold", 10),
+            "mono": ("Consolas", 10),
+        }
+
+        self.configure(bg=self.colors["bg"])
+        self.option_add("*Font", self.fonts["body"])
+        self.geometry("1040x780")
+        self.minsize(940, 680)
 
         self.lang_var = tk.StringVar(value="zh")
         self.edition_var = tk.StringVar(value="standard")
@@ -168,11 +202,14 @@ class Md2DocxApp(tk.Tk):
 
         self.log_queue: queue.Queue[str] = queue.Queue()
         self.is_running = False
+        self.paste_placeholder_active = False
 
         self.interactive_widgets: list[tk.Widget] = []
 
         self._build_ui()
+        self._apply_modern_theme()
         self._refresh_texts()
+        self._setup_paste_placeholder()
         self._apply_startup_args()
         self._append_log(self.t("log_ready"))
         self.after(120, self._drain_log_queue)
@@ -183,8 +220,16 @@ class Md2DocxApp(tk.Tk):
         return text.format(**kwargs) if kwargs else text
 
     def _build_ui(self) -> None:
-        root = tk.Frame(self, padx=14, pady=14)
+        root = tk.Frame(self, padx=16, pady=16)
         root.pack(fill=tk.BOTH, expand=True)
+        self.root_frame = root
+
+        self.header_frame = tk.Frame(root)
+        self.header_frame.pack(fill=tk.X, pady=(0, 12))
+        self.header_title_label = tk.Label(self.header_frame, anchor="w")
+        self.header_title_label.pack(fill=tk.X)
+        self.header_subtitle_label = tk.Label(self.header_frame, anchor="w")
+        self.header_subtitle_label.pack(fill=tk.X, pady=(2, 0))
 
         top = tk.Frame(root)
         top.pack(fill=tk.X, pady=(0, 10))
@@ -270,6 +315,8 @@ class Md2DocxApp(tk.Tk):
 
         self.std_paste_content_label = tk.Label(self.standard_paste_content_frame)
         self.std_paste_content_label.pack(anchor="w")
+        self.std_paste_hint_label = tk.Label(self.standard_paste_content_frame, anchor="w", justify=tk.LEFT)
+        self.std_paste_hint_label.pack(anchor="w", pady=(2, 6))
 
         self.std_paste_text = ScrolledText(self.standard_paste_content_frame, height=12, wrap=tk.WORD)
         self.std_paste_text.pack(fill=tk.X, pady=(4, 8))
@@ -469,8 +516,203 @@ class Md2DocxApp(tk.Tk):
             self.adv_convert_btn,
         ]
 
+    def _apply_modern_theme(self) -> None:
+        self._style_widget_tree(self)
+
+        self.header_title_label.configure(
+            font=self.fonts["title"],
+            fg=self.colors["text"],
+        )
+        self.header_subtitle_label.configure(
+            font=self.fonts["subtitle"],
+            fg=self.colors["muted"],
+        )
+
+        self._style_primary_button(self.std_paste_convert_btn)
+        self._style_primary_button(self.std_single_convert_btn)
+        self._style_primary_button(self.adv_convert_btn)
+
+        for btn in [
+            self.std_paste_output_btn,
+            self.std_paste_template_btn,
+            self.std_paste_template_clear_btn,
+            self.std_single_input_btn,
+            self.std_single_output_btn,
+            self.std_single_template_btn,
+            self.std_single_template_clear_btn,
+            self.adv_input_btn,
+            self.adv_output_btn,
+            self.adv_template_btn,
+            self.adv_template_clear_btn,
+        ]:
+            self._style_secondary_button(btn)
+
+        self.std_paste_text.configure(
+            bg=self.colors["card"],
+            fg=self.colors["text"],
+            insertbackground=self.colors["text"],
+            disabledforeground=self.colors["muted"],
+            relief="flat",
+            padx=10,
+            pady=8,
+            highlightthickness=1,
+            highlightbackground=self.colors["border"],
+            highlightcolor=self.colors["primary"],
+        )
+        self.log_box.configure(
+            bg=self.colors["log_bg"],
+            fg=self.colors["log_fg"],
+            insertbackground=self.colors["log_fg"],
+            disabledforeground=self.colors["log_fg"],
+            relief="flat",
+            padx=10,
+            pady=8,
+            highlightthickness=1,
+            highlightbackground=self.colors["border"],
+            highlightcolor=self.colors["primary"],
+            font=self.fonts["mono"],
+        )
+
+    def _style_widget_tree(self, widget: tk.Misc) -> None:
+        self._style_one_widget(widget)
+        for child in widget.winfo_children():
+            self._style_widget_tree(child)
+
+    def _style_one_widget(self, widget: tk.Misc) -> None:
+        if isinstance(widget, tk.Tk):
+            widget.configure(bg=self.colors["bg"])
+            return
+
+        parent_bg = self.colors["bg"]
+        master = getattr(widget, "master", None)
+        if master is not None:
+            try:
+                parent_bg = master.cget("bg")
+            except tk.TclError:
+                parent_bg = self.colors["bg"]
+
+        if isinstance(widget, tk.LabelFrame):
+            widget.configure(
+                bg=self.colors["card"],
+                fg=self.colors["text"],
+                bd=1,
+                relief="solid",
+                font=self.fonts["heading"],
+                highlightthickness=1,
+                highlightbackground=self.colors["border"],
+                highlightcolor=self.colors["border"],
+                padx=12,
+                pady=10,
+            )
+            return
+
+        if isinstance(widget, tk.Frame):
+            widget.configure(bg=parent_bg)
+            return
+
+        if isinstance(widget, tk.Label):
+            widget.configure(bg=parent_bg, fg=self.colors["text"])
+            return
+
+        if isinstance(widget, tk.Entry):
+            widget.configure(
+                bg=self.colors["card"],
+                fg=self.colors["text"],
+                relief="flat",
+                insertbackground=self.colors["text"],
+                highlightthickness=1,
+                highlightbackground=self.colors["border"],
+                highlightcolor=self.colors["primary"],
+            )
+            return
+
+        if isinstance(widget, tk.Radiobutton):
+            widget.configure(
+                bg=parent_bg,
+                fg=self.colors["text"],
+                activebackground=parent_bg,
+                activeforeground=self.colors["text"],
+                selectcolor=self.colors["card"],
+                highlightthickness=0,
+                bd=0,
+            )
+            return
+
+        if isinstance(widget, tk.Checkbutton):
+            widget.configure(
+                bg=parent_bg,
+                fg=self.colors["text"],
+                activebackground=parent_bg,
+                activeforeground=self.colors["text"],
+                selectcolor=self.colors["card"],
+                highlightthickness=0,
+                bd=0,
+            )
+            return
+
+        if isinstance(widget, tk.Button):
+            self._style_secondary_button(widget)
+
+    def _style_primary_button(self, btn: tk.Button) -> None:
+        btn.configure(
+            bg=self.colors["primary"],
+            fg="white",
+            activebackground=self.colors["primary_hover"],
+            activeforeground="white",
+            relief="flat",
+            bd=0,
+            padx=16,
+            pady=9,
+            font=self.fonts["button"],
+            cursor="hand2",
+        )
+
+    def _style_secondary_button(self, btn: tk.Button) -> None:
+        btn.configure(
+            bg=self.colors["button"],
+            fg=self.colors["text"],
+            activebackground=self.colors["button_hover"],
+            activeforeground=self.colors["text"],
+            relief="flat",
+            bd=0,
+            padx=12,
+            pady=7,
+            cursor="hand2",
+        )
+
+    def _setup_paste_placeholder(self) -> None:
+        self.std_paste_text.bind("<FocusIn>", self._on_paste_focus_in)
+        self.std_paste_text.bind("<FocusOut>", self._on_paste_focus_out)
+        self._set_paste_placeholder_text()
+
+    def _set_paste_placeholder_text(self) -> None:
+        self.std_paste_text.configure(state=tk.NORMAL)
+        self.std_paste_text.delete("1.0", tk.END)
+        self.std_paste_text.insert("1.0", self.t("paste_placeholder"))
+        self.std_paste_text.configure(fg=self.colors["muted"])
+        self.paste_placeholder_active = True
+
+    def _on_paste_focus_in(self, _event: tk.Event) -> None:
+        if not self.paste_placeholder_active:
+            return
+        self.std_paste_text.delete("1.0", tk.END)
+        self.std_paste_text.configure(fg=self.colors["text"])
+        self.paste_placeholder_active = False
+
+    def _on_paste_focus_out(self, _event: tk.Event) -> None:
+        if self.std_paste_text.get("1.0", tk.END).strip():
+            return
+        self._set_paste_placeholder_text()
+
+    def _get_paste_content(self) -> str:
+        if self.paste_placeholder_active:
+            return ""
+        return self.std_paste_text.get("1.0", tk.END).strip()
+
     def _refresh_texts(self) -> None:
         self.title(self.t("window_title"))
+        self.header_title_label.configure(text=self.t("header_title"))
+        self.header_subtitle_label.configure(text=self.t("header_subtitle"))
 
         self.lang_frame.configure(text=self.t("language_group"))
         self.edition_frame.configure(text=self.t("edition_group"))
@@ -483,6 +725,7 @@ class Md2DocxApp(tk.Tk):
         self.standard_single_radio.configure(text=self.t("standard_mode_single"))
 
         self.std_paste_content_label.configure(text=self.t("markdown_content_label"))
+        self.std_paste_hint_label.configure(text=self.t("paste_hint"))
         self.std_paste_output_label.configure(text=self.t("output_label"))
         self.std_paste_filename_label.configure(text=self.t("filename_label"))
         self.std_paste_template_label.configure(text=self.t("template_label"))
@@ -517,6 +760,9 @@ class Md2DocxApp(tk.Tk):
         self.std_paste_convert_btn.configure(text=convert_text)
         self.std_single_convert_btn.configure(text=convert_text)
         self.adv_convert_btn.configure(text=convert_text)
+
+        if self.paste_placeholder_active and not self.is_running:
+            self._set_paste_placeholder_text()
 
     def _on_language_change(self) -> None:
         self._refresh_texts()
@@ -685,6 +931,8 @@ class Md2DocxApp(tk.Tk):
 
         self._on_advanced_mode_change()
         self._refresh_texts()
+        if not running and not self.std_paste_text.get("1.0", tk.END).strip():
+            self._set_paste_placeholder_text()
 
     def _start_standard_paste_convert(self) -> None:
         if self.is_running:
@@ -695,7 +943,7 @@ class Md2DocxApp(tk.Tk):
             messagebox.showerror(self.t("pandoc_not_found_title"), self.t("pandoc_not_found_msg"))
             return
 
-        content = self.std_paste_text.get("1.0", tk.END).strip()
+        content = self._get_paste_content()
         output_dir = self.std_paste_output_var.get().strip()
         filename = self.std_paste_filename_var.get().strip()
         template = self.std_paste_template_var.get().strip()
@@ -729,7 +977,7 @@ class Md2DocxApp(tk.Tk):
         self._append_log(self.t("log_using_pandoc", lang=lang, pandoc=pandoc_path))
         self._append_log(self.t("log_mode", lang=lang, mode=self.t("mode_standard_paste", lang=lang)))
         self._append_log(self.t("log_output", lang=lang, output=out_dir))
-        self._append_log(self.t("log_template", lang=lang, template=(template if template else "(none)")))
+        self._append_log(self.t("log_template", lang=lang, template=(template if template else self.t("none_text", lang=lang))))
         self._append_log(self.t("log_target", lang=lang, target=dst))
 
         thread = threading.Thread(
@@ -778,7 +1026,7 @@ class Md2DocxApp(tk.Tk):
         self._append_log(self.t("log_mode", lang=lang, mode=self.t("mode_standard_single", lang=lang)))
         self._append_log(self.t("log_input", lang=lang, input=src))
         self._append_log(self.t("log_output", lang=lang, output=out_dir))
-        self._append_log(self.t("log_template", lang=lang, template=(template if template else "(none)")))
+        self._append_log(self.t("log_template", lang=lang, template=(template if template else self.t("none_text", lang=lang))))
 
         thread = threading.Thread(
             target=self._convert_single_file_worker,
@@ -833,7 +1081,7 @@ class Md2DocxApp(tk.Tk):
         self._append_log(self.t("log_mode", lang=lang, mode=mode_label))
         self._append_log(self.t("log_input", lang=lang, input=src_path))
         self._append_log(self.t("log_output", lang=lang, output=out_dir))
-        self._append_log(self.t("log_template", lang=lang, template=(template if template else "(none)")))
+        self._append_log(self.t("log_template", lang=lang, template=(template if template else self.t("none_text", lang=lang))))
 
         thread = threading.Thread(
             target=self._convert_advanced_worker,
