@@ -6,3 +6,4 @@ dist/
 .venv/
 test_out_single/
 test_out_batch/
+testdata/
