@@ -304,6 +304,7 @@ class Md2DocxApp(tk.Tk):
         self._refresh_texts()
         self._setup_paste_placeholder()
         self._apply_startup_args()
+        self._ensure_default_output_dirs()
         self._append_log(self.t("log_ready"))
         self._set_status("ready")
         self.after(120, self._drain_log_queue)
@@ -1053,6 +1054,37 @@ class Md2DocxApp(tk.Tk):
         self._on_advanced_mode_change()
         self._on_edition_change()
 
+    def _default_output_dir(self) -> Path:
+        home = Path.home()
+        # Prefer a user-writable folder that is easy to find on Windows.
+        roots = [
+            home / "Downloads",
+            home / "下载",
+            home / "Documents",
+            home / "Desktop",
+            home,
+        ]
+        for root in roots:
+            if root.is_dir():
+                return root / "Md2Docx_output"
+        return home / "Md2Docx_output"
+
+    def _existing_dir_for_dialog(self, candidate: Path) -> str:
+        if candidate.is_dir():
+            return str(candidate)
+        if candidate.parent.is_dir():
+            return str(candidate.parent)
+        return str(Path.home())
+
+    def _ensure_default_output_dirs(self) -> None:
+        default_out = str(self._default_output_dir())
+        if not self.std_paste_output_var.get().strip():
+            self.std_paste_output_var.set(default_out)
+        if not self.std_single_output_var.get().strip():
+            self.std_single_output_var.set(default_out)
+        if not self.adv_output_var.get().strip():
+            self.adv_output_var.set(default_out)
+
     def _pick_template(self, target_var: tk.StringVar) -> None:
         path = filedialog.askopenfilename(
             title=self.t("choose_template"),
@@ -1062,7 +1094,9 @@ class Md2DocxApp(tk.Tk):
             target_var.set(path)
 
     def _pick_std_paste_output(self) -> None:
-        path = filedialog.askdirectory(title=self.t("choose_output_folder"))
+        current = self.std_paste_output_var.get().strip()
+        initial_dir = self._existing_dir_for_dialog(Path(current) if current else self._default_output_dir())
+        path = filedialog.askdirectory(title=self.t("choose_output_folder"), initialdir=initial_dir)
         if path:
             self.std_paste_output_var.set(path)
 
@@ -1078,7 +1112,9 @@ class Md2DocxApp(tk.Tk):
                 self.std_single_output_var.set(str(path_obj.parent / "docx_output"))
 
     def _pick_std_single_output(self) -> None:
-        path = filedialog.askdirectory(title=self.t("choose_output_folder"))
+        current = self.std_single_output_var.get().strip()
+        initial_dir = self._existing_dir_for_dialog(Path(current) if current else self._default_output_dir())
+        path = filedialog.askdirectory(title=self.t("choose_output_folder"), initialdir=initial_dir)
         if path:
             self.std_single_output_var.set(path)
 
@@ -1101,7 +1137,9 @@ class Md2DocxApp(tk.Tk):
                     self.adv_output_var.set(str(path_obj / "docx_output"))
 
     def _pick_adv_output(self) -> None:
-        path = filedialog.askdirectory(title=self.t("choose_output_folder"))
+        current = self.adv_output_var.get().strip()
+        initial_dir = self._existing_dir_for_dialog(Path(current) if current else self._default_output_dir())
+        path = filedialog.askdirectory(title=self.t("choose_output_folder"), initialdir=initial_dir)
         if path:
             self.adv_output_var.set(path)
 
