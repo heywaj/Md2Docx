@@ -6,6 +6,7 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
+import os
 from pathlib import Path
 from tkinter import filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
@@ -22,6 +23,7 @@ TRANSLATIONS = {
         "settings_hide_btn": "收起设置",
         "logs_show_btn": "展开日志",
         "logs_hide_btn": "收起日志",
+        "auto_open_output": "转换完成后自动打开输出文件夹",
         "tutorial_btn": "教程",
         "tutorial_title": "使用教程（按钮说明）",
         "tutorial_msg": (
@@ -134,6 +136,7 @@ TRANSLATIONS = {
         "settings_hide_btn": "Hide Settings",
         "logs_show_btn": "Show Logs",
         "logs_hide_btn": "Hide Logs",
+        "auto_open_output": "Auto-open output folder after conversion",
         "tutorial_btn": "Tutorial",
         "tutorial_title": "Quick Guide (Button Help)",
         "tutorial_msg": (
@@ -289,9 +292,11 @@ class Md2DocxApp(tk.Tk):
         self.adv_output_var = tk.StringVar()
         self.adv_template_var = tk.StringVar()
         self.adv_recursive_var = tk.BooleanVar(value=True)
+        self.auto_open_output_var = tk.BooleanVar(value=True)
 
         self.log_queue: queue.Queue[object] = queue.Queue()
         self.is_running = False
+        self.pending_output_dir: Path | None = None
         self.paste_placeholder_active = False
         self.settings_visible = False
         self.log_visible = False
@@ -335,6 +340,8 @@ class Md2DocxApp(tk.Tk):
         self.log_toggle_btn.pack(side=tk.RIGHT, padx=(8, 0))
         self.tutorial_btn = tk.Button(self.toolbar_frame, command=self._show_tutorial)
         self.tutorial_btn.pack(side=tk.RIGHT)
+        self.auto_open_output_check = tk.Checkbutton(self.toolbar_frame, variable=self.auto_open_output_var)
+        self.auto_open_output_check.pack(side=tk.LEFT)
 
         self.settings_panel = tk.Frame(root)
 
@@ -597,6 +604,7 @@ class Md2DocxApp(tk.Tk):
             self.settings_toggle_btn,
             self.log_toggle_btn,
             self.tutorial_btn,
+            self.auto_open_output_check,
             self.edition_standard_radio,
             self.edition_advanced_radio,
             self.lang_zh_radio,
@@ -848,6 +856,7 @@ class Md2DocxApp(tk.Tk):
             text=self.t("logs_hide_btn") if self.log_visible else self.t("logs_show_btn")
         )
         self.tutorial_btn.configure(text=self.t("tutorial_btn"))
+        self.auto_open_output_check.configure(text=self.t("auto_open_output"))
 
         self.lang_frame.configure(text=self.t("language_group"))
         self.edition_frame.configure(text=self.t("edition_group"))
@@ -969,6 +978,28 @@ class Md2DocxApp(tk.Tk):
 
         self.status_label.configure(text=text, fg=color)
 
+    def _open_output_folder(self, folder: Path) -> None:
+        if not folder.exists():
+            return
+        try:
+            if sys.platform.startswith("win"):
+                os.startfile(str(folder))  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", str(folder)])
+            else:
+                subprocess.Popen(["xdg-open", str(folder)])
+        except Exception:
+            pass
+
+    def _maybe_open_output_folder(self, ok: int) -> None:
+        if ok <= 0:
+            return
+        if not self.auto_open_output_var.get():
+            return
+        if self.pending_output_dir is None:
+            return
+        self._open_output_folder(self.pending_output_dir)
+
     def _handle_result(self, ok: int, fail: int, lang: str) -> None:
         if ok > 0 and fail == 0:
             self._set_status("success")
@@ -976,6 +1007,8 @@ class Md2DocxApp(tk.Tk):
                 self.t("result_success_title", lang=lang),
                 self.t("result_success_msg", lang=lang, ok=ok),
             )
+            self._maybe_open_output_folder(ok)
+            self.pending_output_dir = None
             return
 
         if ok > 0 and fail > 0:
@@ -984,6 +1017,8 @@ class Md2DocxApp(tk.Tk):
                 self.t("result_partial_title", lang=lang),
                 self.t("result_partial_msg", lang=lang, ok=ok, fail=fail),
             )
+            self._maybe_open_output_folder(ok)
+            self.pending_output_dir = None
             return
 
         if ok == 0 and fail == 0:
@@ -992,6 +1027,7 @@ class Md2DocxApp(tk.Tk):
                 self.t("result_empty_title", lang=lang),
                 self.t("result_empty_msg", lang=lang),
             )
+            self.pending_output_dir = None
             return
 
         self._set_status("fail")
@@ -999,6 +1035,7 @@ class Md2DocxApp(tk.Tk):
             self.t("result_fail_title", lang=lang),
             self.t("result_fail_msg", lang=lang, fail=fail),
         )
+        self.pending_output_dir = None
 
     def _on_edition_change(self) -> None:
         edition = self.edition_var.get()
@@ -1208,6 +1245,7 @@ class Md2DocxApp(tk.Tk):
     def _start_standard_paste_convert(self) -> None:
         if self.is_running:
             return
+        self.pending_output_dir = None
 
         pandoc_path = self._resolve_pandoc_path()
         if not pandoc_path:
@@ -1241,6 +1279,7 @@ class Md2DocxApp(tk.Tk):
 
         out_dir = Path(output_dir)
         dst = out_dir / docx_name
+        self.pending_output_dir = out_dir
 
         self._set_running(True)
         self._set_status("running")
@@ -1262,6 +1301,7 @@ class Md2DocxApp(tk.Tk):
     def _start_standard_single_convert(self) -> None:
         if self.is_running:
             return
+        self.pending_output_dir = None
 
         pandoc_path = self._resolve_pandoc_path()
         if not pandoc_path:
@@ -1290,6 +1330,7 @@ class Md2DocxApp(tk.Tk):
 
         out_dir = Path(output_dir)
         dst = out_dir / f"{src.stem}.docx"
+        self.pending_output_dir = out_dir
 
         self._set_running(True)
         self._set_status("running")
@@ -1311,6 +1352,7 @@ class Md2DocxApp(tk.Tk):
     def _start_advanced_convert(self) -> None:
         if self.is_running:
             return
+        self.pending_output_dir = None
 
         pandoc_path = self._resolve_pandoc_path()
         if not pandoc_path:
@@ -1345,6 +1387,7 @@ class Md2DocxApp(tk.Tk):
             return
 
         out_dir = Path(output_dir)
+        self.pending_output_dir = out_dir
 
         self._set_running(True)
         self._set_status("running")
