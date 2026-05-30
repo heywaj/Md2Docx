@@ -22,6 +22,32 @@ TRANSLATIONS = {
         "settings_hide_btn": "收起设置",
         "logs_show_btn": "展开日志",
         "logs_hide_btn": "收起日志",
+        "tutorial_btn": "教程",
+        "tutorial_title": "使用教程（按钮说明）",
+        "tutorial_msg": (
+            "推荐老年人使用“{standard_mode_paste}”（复制模式）。\n"
+            "不知道 Markdown 是什么也没关系，直接粘贴 AI 生成的文字就行。\n\n"
+            "按这个顺序点：\n"
+            "1. 先选语言（中文/English）。\n"
+            "2. 选“{edition_standard}”（最简单）。\n"
+            "3. 选“{standard_mode_paste}”。\n"
+            "4. 把 AI 生成的文字粘贴到大文本框。\n"
+            "5. 点“{browse_btn}”，选保存位置（输出目录）。\n"
+            "6. 点“{convert_btn}”，等提示“转换成功”。\n\n"
+            "每个按钮是做什么的：\n"
+            "1. {tutorial_btn}：打开这份说明。\n"
+            "2. {settings_show_btn}/{settings_hide_btn}：把设置区展开或收起。\n"
+            "3. {logs_show_btn}/{logs_hide_btn}：查看或隐藏运行日志。\n"
+            "4. {browse_btn}：用来“选择文件/文件夹”。\n"
+            "5. {clear_btn}：把模板输入框清空。\n"
+            "6. {convert_btn}：开始转换（进行中会显示“{converting_btn}”）。\n"
+            "7. {edition_standard}：推荐平时使用，步骤少。\n"
+            "8. {edition_advanced}：给熟悉电脑的人用。\n"
+            "9. {standard_mode_paste}：把文字粘贴进去直接转。\n"
+            "10. {standard_mode_single}：选一个文件来转换。\n"
+            "11. {advanced_mode_folder}：一次转换整个文件夹。\n"
+            "12. {advanced_recursive}：连子文件夹一起转换。"
+        ),
         "logs_title": "日志",
         "edition_standard": "标准模式",
         "edition_advanced": "高级模式",
@@ -39,7 +65,7 @@ TRANSLATIONS = {
         "filename_label": "文件名：",
         "template_label": "模板：",
         "markdown_content_label": "Markdown 内容：",
-        "paste_hint": "提示：直接粘贴 Markdown 内容，支持标题、列表、表格等常见语法。",
+        "paste_hint": "提示：不会 Markdown 也没关系，直接粘贴 AI 生成的文字也能转换。",
         "paste_placeholder": "请将 Markdown 内容粘贴到这里，然后点击“转换”...",
         "browse_btn": "浏览",
         "clear_btn": "清空",
@@ -108,6 +134,32 @@ TRANSLATIONS = {
         "settings_hide_btn": "Hide Settings",
         "logs_show_btn": "Show Logs",
         "logs_hide_btn": "Hide Logs",
+        "tutorial_btn": "Tutorial",
+        "tutorial_title": "Quick Guide (Button Help)",
+        "tutorial_msg": (
+            "Recommended for seniors: use \"{standard_mode_paste}\".\n"
+            "No need to understand Markdown. Just paste AI-generated text.\n\n"
+            "Follow these steps:\n"
+            "1. Choose language (中文/English).\n"
+            "2. Choose \"{edition_standard}\" (the easiest mode).\n"
+            "3. Choose \"{standard_mode_paste}\".\n"
+            "4. Paste AI-generated text into the big text box.\n"
+            "5. Click \"{browse_btn}\" and pick where to save.\n"
+            "6. Click \"{convert_btn}\" and wait for success message.\n\n"
+            "What each button means:\n"
+            "1. {tutorial_btn}: open this help.\n"
+            "2. {settings_show_btn}/{settings_hide_btn}: show or hide settings.\n"
+            "3. {logs_show_btn}/{logs_hide_btn}: show or hide logs.\n"
+            "4. {browse_btn}: choose a file or folder.\n"
+            "5. {clear_btn}: clear the template box.\n"
+            "6. {convert_btn}: start converting (shows \"{converting_btn}\" while running).\n"
+            "7. {edition_standard}: recommended for daily use.\n"
+            "8. {edition_advanced}: for experienced users.\n"
+            "9. {standard_mode_paste}: paste text and convert.\n"
+            "10. {standard_mode_single}: convert one file.\n"
+            "11. {advanced_mode_folder}: convert a whole folder.\n"
+            "12. {advanced_recursive}: include subfolders too."
+        ),
         "logs_title": "Logs",
         "edition_standard": "Standard",
         "edition_advanced": "Advanced",
@@ -125,7 +177,7 @@ TRANSLATIONS = {
         "filename_label": "File name:",
         "template_label": "Template:",
         "markdown_content_label": "Markdown content:",
-        "paste_hint": "Tip: paste markdown directly. Headings, lists and tables are supported.",
+        "paste_hint": "Tip: if you don't know Markdown, just paste AI-generated text here.",
         "paste_placeholder": "Paste Markdown content here, then click Convert...",
         "browse_btn": "Browse",
         "clear_btn": "Clear",
@@ -279,7 +331,9 @@ class Md2DocxApp(tk.Tk):
         self.settings_toggle_btn = tk.Button(self.toolbar_frame, command=self._toggle_settings_panel)
         self.settings_toggle_btn.pack(side=tk.RIGHT, padx=(8, 0))
         self.log_toggle_btn = tk.Button(self.toolbar_frame, command=self._toggle_log_panel)
-        self.log_toggle_btn.pack(side=tk.RIGHT)
+        self.log_toggle_btn.pack(side=tk.RIGHT, padx=(8, 0))
+        self.tutorial_btn = tk.Button(self.toolbar_frame, command=self._show_tutorial)
+        self.tutorial_btn.pack(side=tk.RIGHT)
 
         self.settings_panel = tk.Frame(root)
 
@@ -541,6 +595,7 @@ class Md2DocxApp(tk.Tk):
         self.interactive_widgets = [
             self.settings_toggle_btn,
             self.log_toggle_btn,
+            self.tutorial_btn,
             self.edition_standard_radio,
             self.edition_advanced_radio,
             self.lang_zh_radio,
@@ -590,6 +645,7 @@ class Md2DocxApp(tk.Tk):
 
         self._style_secondary_button(self.settings_toggle_btn)
         self._style_secondary_button(self.log_toggle_btn)
+        self._style_secondary_button(self.tutorial_btn)
 
         self._style_primary_button(self.std_paste_convert_btn)
         self._style_primary_button(self.std_single_convert_btn)
@@ -790,6 +846,7 @@ class Md2DocxApp(tk.Tk):
         self.log_toggle_btn.configure(
             text=self.t("logs_hide_btn") if self.log_visible else self.t("logs_show_btn")
         )
+        self.tutorial_btn.configure(text=self.t("tutorial_btn"))
 
         self.lang_frame.configure(text=self.t("language_group"))
         self.edition_frame.configure(text=self.t("edition_group"))
@@ -864,6 +921,29 @@ class Md2DocxApp(tk.Tk):
         else:
             self.log_panel.pack_forget()
         self._refresh_texts()
+
+    def _show_tutorial(self) -> None:
+        messagebox.showinfo(
+            self.t("tutorial_title"),
+            self.t(
+                "tutorial_msg",
+                tutorial_btn=self.t("tutorial_btn"),
+                settings_show_btn=self.t("settings_show_btn"),
+                settings_hide_btn=self.t("settings_hide_btn"),
+                logs_show_btn=self.t("logs_show_btn"),
+                logs_hide_btn=self.t("logs_hide_btn"),
+                browse_btn=self.t("browse_btn"),
+                clear_btn=self.t("clear_btn"),
+                convert_btn=self.t("convert_btn"),
+                converting_btn=self.t("converting_btn"),
+                edition_standard=self.t("edition_standard"),
+                edition_advanced=self.t("edition_advanced"),
+                standard_mode_paste=self.t("standard_mode_paste"),
+                standard_mode_single=self.t("standard_mode_single"),
+                advanced_mode_folder=self.t("advanced_mode_folder"),
+                advanced_recursive=self.t("advanced_recursive"),
+            ),
+        )
 
     def _set_status(self, kind: str) -> None:
         self.status_kind = kind
