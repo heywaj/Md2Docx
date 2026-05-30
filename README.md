@@ -35,7 +35,7 @@ git commit -m "init md2docx gui tool"
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.8+ (for Windows 7 target, use Python 3.8.x)
 - `pandoc` installed and available in `PATH` (for running from source or building exe)
 - `PyInstaller` (for building exe)
 
@@ -96,6 +96,8 @@ python app.py testdata/a.md
 ```bash
 pip install -r requirements-build.txt
 ```
+
+For Windows 7 compatible output, build with Python `3.8.x` (recommended: `3.8.10`).
 
 2. Build:
 
@@ -164,3 +166,4 @@ The app will pre-fill input/output fields automatically.
 - In folder mode, output keeps the same relative subfolder structure.
 - Supported Markdown extensions: `.md`, `.markdown`, `.mdown`, `.mkd`.
 - If using source mode (`python app.py`) and pandoc is missing, add pandoc to `PATH`.
+- Windows 7 runtime requirement: install SP1 + KB2999226 (Universal CRT) and Microsoft Visual C++ 2015-2022 Redistributable (x64).

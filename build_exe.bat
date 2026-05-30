@@ -3,10 +3,22 @@ setlocal
 
 set APP_NAME=Md2Docx
 set ENTRY=app.py
+set TARGET_PY=3.8
 
 if not exist "%ENTRY%" (
   echo [ERROR] Cannot find %ENTRY% in current folder.
   exit /b 1
+)
+
+for /f "tokens=1,2 delims=." %%A in ('python -c "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')"') do (
+  set PY_MAJ=%%A
+  set PY_MIN=%%B
+)
+set PY_VER=%PY_MAJ%.%PY_MIN%
+if not "%PY_VER%"=="%TARGET_PY%" (
+  echo [WARN] Current Python is %PY_VER%.
+  echo [WARN] For Windows 7 compatibility, build with Python %TARGET_PY% x64.
+  echo [WARN] Continue build anyway...
 )
 
 where pyinstaller >nul 2>&1
